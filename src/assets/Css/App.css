@@ -1,21 +1,14 @@
 .App {
-  background-image: url("../src/assets/images/R.png") !important;
-  object-fit: cover;
+  background-image: url("../images/R.png") !important;
+  width: 100vw !important;
+  height:100vh !important;
 }
-*
-{
-  overflow-y: hidden;
-}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
 
 .App-header {
   background-color: #282c34;
@@ -31,6 +24,13 @@
 .App-link {
   color: #61dafb;
 }
+.text-none{
+  text-decoration: none;
+}
+.hover-Sidebar{
+  background-color:gainsboro;
+  color:black !important;
+}
 
 @keyframes App-logo-spin {
   from {
@@ -39,4 +39,15 @@
   to {
     transform: rotate(360deg);
   }
+}
+.bg-gainsboro
+{
+  background-color:gainsboro;
+}
+.transparent-bg {
+  background-color: transparent !important;
+  border: none !important;
+}
+::-webkit-scrollbar {
+  display: none;
 }

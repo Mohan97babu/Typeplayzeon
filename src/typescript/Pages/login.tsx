@@ -1,26 +1,31 @@
 import React, { useState, ChangeEvent } from "react";
 import { Container, Row, Col, Button } from "react-bootstrap";
-import logo1 from "../assets/images/logobgremove.png";
+import logo1 from "../../assets/images/logobgremove.png";
+
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
 interface LoginDetails {
   userName: string;
   password: string;
 }
 
-const Login: React.FC = () => {
+const Login: React.FC<{setIsSignedIn: boolean}> = ({setIsSignedIn}) => {
   const [loginDetails, setLoginDetails] = useState<LoginDetails>({
     userName: "",
     password: "",
   });
-
+const tempURL = process.env.REACT_APP_BASEURLTEMP;
+const orgURL = process.env.REACT_APP_BASEURLORG;
+const navigate = useNavigate();
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setLoginDetails({ ...loginDetails, [event.target.name]: event.target.value });
     console.log(loginDetails, "gvg");
   };
   const handleSubmit = async () =>
   {
-     await axios.post("https://b250-2405-201-e059-b805-84df-2024-e7ff-558e.ngrok-free.app/api/user-management/login",loginDetails)
-    .then((response) => localStorage.setItem("AccessToken",response.data.accessToken))
+     await axios.post(`${tempURL}/api/user-management/login`,loginDetails)
+    .then((response) => {localStorage.setItem("AccessToken",response.data.accessToken); navigate("/center"); setIsSignedIn(true); })
     .catch((err) => console.log(err))
   }
 
@@ -53,9 +58,9 @@ const Login: React.FC = () => {
                   <img src={logo1} width={200} height={100} />
                 </div> */}
               <label className="my-2 text-black">Email Address</label>
-              <input type="email" className="form-control " name="userName" onChange={(e) => handleChange(e)} placeholder="Email Address" />
+              <input type="email" className="form-control " name="userName" onChange={(e) => handleChange(e)} placeholder="Email Address" value={loginDetails.userName} />
               <label className="my-2 text-black">Password</label>
-              <input type="password" className="form-control " name="password" onChange={(e) => handleChange(e)} placeholder="Password" />
+              <input type="password" className="form-control " name="password" onChange={(e) => handleChange(e)} placeholder="Password" value={loginDetails.password} />
               <div className="d-flex justify-content-end mt-3 text-danger">Forgot Password?</div>
               <div>
                 <Button variant="danger" className="  w-100 my-3 shadow-3" onClick={() =>handleSubmit()}>
