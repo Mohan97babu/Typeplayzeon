@@ -1,16 +1,15 @@
 import React, { useState, ChangeEvent } from "react";
 import { Container, Row, Col, Button } from "react-bootstrap";
-import logo1 from "../../assets/images/logobgremove.png";
-
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import logo1 from "../../assets/images/LogoNav.png";
 
 interface LoginDetails {
   userName: string;
   password: string;
 }
 
-const Login: React.FC<{setIsSignedIn: boolean}> = ({setIsSignedIn}) => {
+const Login: React.FC<{setIsSignedIn: React.Dispatch<React.SetStateAction<boolean>>}> = ({setIsSignedIn}) => {
   const [loginDetails, setLoginDetails] = useState<LoginDetails>({
     userName: "",
     password: "",
@@ -20,19 +19,22 @@ const orgURL = process.env.REACT_APP_BASEURLORG;
 const navigate = useNavigate();
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setLoginDetails({ ...loginDetails, [event.target.name]: event.target.value });
-    console.log(loginDetails, "gvg");
+    
   };
   const handleSubmit = async () =>
   {
      await axios.post(`${tempURL}/api/user-management/login`,loginDetails)
-    .then((response) => {localStorage.setItem("AccessToken",response.data.accessToken); navigate("/center"); setIsSignedIn(true); })
+    .then((response) => {
+      console.log(response,"65655")
+      localStorage.setItem("AccessToken",response.data.accessToken);
+       navigate("/center"); setIsSignedIn(true); })
     .catch((err) => console.log(err))
   }
 
   return (
     <Container fluid className="App vh-100  bg-dark "> 
       <div className=' p-2 bg-dark'>
-        <img src={logo1}  width="200" height="60"/>
+        <img src={logo1}  width="200" height="60" alt="...."/>
       </div>
     <div className="  d-flex justify-content-center align-items-center ">
       <Container fluid>
