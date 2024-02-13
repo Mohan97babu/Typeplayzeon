@@ -1,19 +1,20 @@
-import { Col, Row, Form, Button, Offcanvas } from "react-bootstrap";
+import { Col, Row, Form, Button, Offcanvas, Table } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import React, { useState, ChangeEvent, useEffect } from "react";
 import Select from 'react-select';
 import { FacilityType, BookingType } from "../../utils/Data";
-import { Time } from "../../utils/Data";
+import { Time, Days,TableAddPlayers,TablePricing } from "../../utils/Data";
 import Moment from "react-moment";
 import moment from "moment";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { Calendar, momentLocalizer ,Views } from "react-big-calendar";
+import { Calendar, momentLocalizer, Views } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "../../assets/Css/App.css";
 import { Formik } from "formik";
 import * as yup from "yup";
+
 
 interface bookingDetails {
     bookingType: string;
@@ -28,12 +29,16 @@ interface bookingDetails {
     lastName: string;
     emailAddress: string;
     phoneNumber: string;
+    pricingRule: string,
+    facilities: string,
     notes: string;
+    facilityCheck:string;
+    pricingRuleCheck:string;
 }
 interface calendarDetails {
     facilityType: string;
     facilities: string;
-    date: string;
+    date: Date;
     sportsId: any
 }
 interface apiResponse {
@@ -44,17 +49,27 @@ interface apiResponse {
 
 const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails: React.Dispatch<React.SetStateAction<bookingDetails>> }> = ({ bookingDetails, setBookingDetails }) => {
     const [show, setShow] = useState(false);
+    const [addShow, setAddShow] = useState(false)
     const [startTime, setStartTime] = useState(null);
     const [endTime, setEndTime] = useState(null);
+    const [perCost,setPerCost] = useState("");
+    const [disable,setDisable] = useState(false);
+    const [addPlayers,setAddPlayers] = useState({
+        firstName:"",
+        lastName:"",
+        nameDiscloseCheck: false,
+        sameAsPrimary:false,
+    })
+    const [addPlayersData,setAddPlayersData] = useState([]);
     // const [facilityType,setFacilityType] = useState([]);
     const [calendarDetails, setCalendarDetails] = useState<calendarDetails>({
         facilityType: "",
         facilities: "",
-        date: "",
+        date: new Date() ,
         sportsId: ""
     })
-    console.log(calendarDetails.date, "457")
-    const [facility, setFacility] = useState<string>("")
+   // console.log(calendarDetails.date, "457")
+  
     const [apiResponse, setApiResponse] = useState<apiResponse>({
         facilityType: [],
         facilities: {},
@@ -62,31 +77,83 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     })
     const centerId = localStorage.getItem("centerId");
     const schema = yup.object().shape({
-        firstName :yup.
+        firstName: yup.string().required("firstName is a Required Field"),
+        lastName: yup.string().required("lastName is a Required Field"),
+        emailAddress: yup.string().email().required("emailAddress is a Required Field"),
+        phoneNumber: yup.string().required("phoneNumber is a Required Field"),
+        facility: yup.string().required('Facility selection is required'), // Validation for the radio button group
+        // Define the pricingRule field with conditional validation
+        pricingRule: yup.string().required(),
     })
+    
+    
+    const handleAddPlayerOpen = () => { setAddShow(true) }
+    const handleAddPlayerClose = () => { setAddShow(false) }
     const handleClose = () => setShow(false);
     const handleShow = () => setShow(true);
     const tempURL = process.env.REACT_APP_BASEURLTEMP;
     const orgURL = process.env.REACT_APP_BASEURLORG;
-    const handleSubmit = () => {
+    const [errors, setErrors] = useState({});
+    const handleSubmit = async (event: any, values: any,) => {
+        event.preventDefault();
+        console.log(bookingDetails,values, "details");
+        setBookingDetails({...bookingDetails,firstName:values.firstName,lastName:values.lastName,emailAddress:values.emailAddress,phoneNumber:values.phoneNumber,pricingRuleCheck:values.pricingRule,facilityCheck:values.facility})
+        //    setSubmitting(false);
+        //     event.preventDefault(); // Prevent default form submission
 
-        console.log(bookingDetails);
+        // try {
+        //     await schema.validate(bookingDetails, { abortEarly: false });
+        //     // Validation passed, reset errors state
+        //     setErrors({});
+        //     // Proceed with form submission
+        //     console.log("Form submitted successfully:", bookingDetails);
+        // } catch (validationErrors) {
+        //     // Validation failed, set errors state
+        //     const errorsObj = {};
+        //     validationErrors.inner.forEach(error => {
+        //         errorsObj[error.path] = error.message;
+        //     });
+        //     setErrors(errorsObj);
+        // }
+        setDisable(true);
     }
+    // console.log(bookingDetails,"out")
     const handleChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
         //   const { name, value } = e.target;
+        console.log(e.target.name, e.target.value, "value");
         setBookingDetails({ ...bookingDetails, [e.target.name]: e.target.value });
-        if (e.target.name === "bookingOccurence" ) {
-            setBookingDetails({ ...bookingDetails, startDate: null, endDate: null, startTime: "", endTime: "" })
+        if (e.target.name === "bookingOccurence") {
+            setBookingDetails({ ...bookingDetails, startDate: null, endDate: null, startTime: "", endTime: "", bookingOccurence: e.target.value });
+            setStartTime(null);
+            setEndTime(null);
         }
-
+        console.log("edited")
     }
+    const handleBookingCost =(pricing:any)=>
+    {
+       console.log(pricing?.pricingRule?.cost,"cost");
+       setPerCost(pricing?.pricingRule?.cost);
+    }
+    const handleAddPlayer =(e) =>
+    {
+        if(e.target.checked === true)
+        {
+           setAddPlayers({...addPlayers,[e.target.name] : true})
+        }
+        else{
+
+            setAddPlayers({...addPlayers,[e.target.name] : e.target.value});
+        }
+    }
+    console.log(addPlayers,"addplayers")
     const listFacilities = async (sportsId: any) => {
         await axios.get(`${tempURL}/api/v1/facilities?sportId.equals=${sportsId}&centerId.equals=${centerId}`)
             .then((response) => setApiResponse((prev) => ({ ...prev, facilities: response.data })))
             .catch((err) => console.log(err))
     }
     const handleCalendarChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>, sportsId: any) => {
-
+        console.log(e.target.value,"valuetarget");
+        
         const selectedFacilityTitle = e.target.value;
         const selectedFacility = apiResponse.facilityType.find((facility) => facility.title === selectedFacilityTitle);
         sportsId = selectedFacility ? selectedFacility.sport.id : null;
@@ -99,6 +166,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
 
         listFacilities(sportsId);
 
+    }
+    const handleDateCalendar =(selectedDate:any) =>{
+        setCalendarDetails({...calendarDetails,date:selectedDate})
     }
     useEffect(() => {
         if (bookingDetails.bookingOccurence === "Single Booking") {
@@ -121,14 +191,12 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     }, []);
 
     const handleBookFacility = async (type: any) => {
-        setFacility(type.name);
-        await axios.get(`${tempURL}/api/v1/pricing-rules?centerId=${centerId}&facilityIds=${type?.[0]?.id}`)
-            .then((response) => setApiResponse({ ...apiResponse, pricingrule: response.data }))
+      //  setFacility(type.name);
+        console.log(type.id, "type")
+        await axios.get(`${tempURL}/api/v1/pricing-rules?centerId=${centerId}&facilityIds=${type?.id}`)
+            .then((response) => {  setApiResponse({ ...apiResponse, pricingrule: response.data }) })
             .catch(err => console.log(err))
     }
-
-    // const today = moment().format('L');
-    // const dateToFormat = bookingDetails.startDate
     const handleReactSelectChange = (selectedOption: any, actionMeta: any) => {
         const name = actionMeta.name || 'defaultName';
         const value = selectedOption.value;
@@ -150,12 +218,15 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         }
     };
     const localizer = momentLocalizer(moment);
-    console.log(bookingDetails, "book")
-    //  console.log(apiResponse, "apires")
-    //  console.log(apiResponse.facilities,"fac")
+  //  console.log(bookingDetails, "book");
+    const handleCheckDays = () => {
+
+    }
+   // console.log(bookingDetails.startDate?.getDay(), bookingDetails.endDate, "startend")
+      
     return (
         <div className="bg-white mt-2 rounded-2 ">
-            <Row className="p-3">
+            <Row className="p-3 mx-0">
 
                 <Row className=" w-100" sm={12} md={10} lg={12} xl={12}>
                     <Col sm={12} md={12} lg={9} xl={7} className="d-lg-flex justify-content-lg-between justify-content-md-around" >
@@ -172,115 +243,65 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 </Row>
             </Row>
             <hr className="my-1" />
-            {/* <Row className="p-3 d-flex">
-                <Col sm={12} lg={4} xl={3}>
-                    <label>Facility Type</label>
-                    <Form.Select aria-label="Default select example" className="mt-2" value={calendarDetails.facilityType} name="facilityType" onChange={(e) => handleCalendarChange(e)}>
-                        {Array.isArray(apiResponse.facilityType) && apiResponse.facilityType.map((facility: any) => {
 
-                            const sportsId = facility.sport.id;
-                            return (
-                                <option value={facility.title} onClick={(e) => handleCalendarChange(e, sportsId)}>
-                                    {facility.title}
-                                </option>
-                            );
-                        })}
-                    </Form.Select>
-                </Col>
-                <Col sm={12} lg={4} xl={3}>
-                    <label>Facilities</label>
-                    <Form.Select aria-label="Default select example" className="mt-2">
-                        <option value={""}>All Court</option>
-                        {Object.entries(apiResponse.facilities).map(([courtName, courtArray]) => (
-                            courtArray.map((facilityItem, index) => (
-                                <option key={`${courtName}-${index}`} value={facilityItem.name}>
-                                    {facilityItem.name}
-                                </option>
-                            ))
-                        ))}
-                    </Form.Select>
-                </Col>
-                <Col sm={12} lg={4} xl={4} className="">
-                    <Form.Group controlId="formBasicEmail"  >
-                        <Form.Label className="mb-2">Date</Form.Label>
-                        
-                        <DatePicker className="form-control  " minDate={new Date()} showIcon />
-
-                    </Form.Group>
-                </Col>
-                <Col xs={2} className="mt-3 ">
-
-                    <div className="mt-3  " >
-
-                        <Button variant="primary"> <Icon icon="ic:baseline-search" height={21} />Search </Button>
-                        <Button variant="danger" className="ms-4" onClick={handleShow}>
-                            Add Booking
-                        </Button>
-                    </div>
-
-                </Col>    
-
-
-                
-            </Row> */}
-            <Row className="p-3">
+            <Row className="p-3 mx-0">
                 <div className="d-md-flex justify-content-between">
 
-                <Col sm={12} md={2} lg={2} xl={3}>
-                    <label>Facility Type</label>
-                    <Form.Select aria-label="Default select example" className="mt-2" value={calendarDetails.facilityType} name="facilityType" onChange={(e) => handleCalendarChange(e)}>
-                        {Array.isArray(apiResponse.facilityType) && apiResponse.facilityType.map((facility: any) => {
+                    <Col sm={12} md={2} lg={2} xl={3}>
+                        <label>Facility Type</label>
+                        <Form.Select aria-label="Default select example" className="mt-2" value={calendarDetails.facilityType} name="facilityType" onChange={(e) => handleCalendarChange(e)}>
+                            {Array.isArray(apiResponse.facilityType) && apiResponse.facilityType.map((facility: any) => {
 
-                            const sportsId = facility.sport.id;
-                            return (
-                                <option value={facility.title} onClick={(e) => handleCalendarChange(e, sportsId)}>
-                                    {facility.title}
-                                </option>
-                            );
-                        })}
-                    </Form.Select>
-                </Col>
-                <Col sm={12} md={2} lg={2} xl={3}>
-                    <label>Facilities</label>
-                    <Form.Select aria-label="Default select example" className="mt-2">
-                        <option value={""}>All Court</option>
-                        {Object.entries(apiResponse.facilities).map(([courtName, courtArray]) => (
-                            courtArray.map((facilityItem, index) => (
-                                <option key={`${courtName}-${index}`} value={facilityItem.name}>
-                                    {facilityItem.name}
-                                </option>
-                            ))
-                        ))}
-                    </Form.Select>
-                </Col>
-                <Col sm={12} md={2} lg={2} xl={2} className="mt-2 ">                   
-                        <label className="mb-2">Date</label>                        
-                        <DatePicker className="form-control  " minDate={new Date()} showIcon />                  
-                </Col>
-                <div className="mt-3">
-                <Col  className="mt-3 ">
+                                const sportsId = facility.sport.id;
+                                return (
+                                    <option value={facility.title} onClick={(e) => handleCalendarChange(e, sportsId)}>
+                                        {facility.title}
+                                    </option>
+                                );
+                            })}
+                        </Form.Select>
+                    </Col>
+                    <Col sm={12} md={2} lg={2} xl={3}>
+                        <label>Facilities</label>
+                        <Form.Select aria-label="Default select example" className="mt-2">
+                            <option value={""}>All Court</option>
+                            {Object.entries(apiResponse.facilities).map(([courtName, courtArray]) => (
+                                courtArray.map((facilityItem, index) => (
+                                    <option key={`${courtName}-${index}`} value={facilityItem.name}>
+                                        {facilityItem.name}
+                                    </option>
+                                ))
+                            ))}
+                        </Form.Select>
+                    </Col>
+                    <Col sm={12} md={2} lg={2} xl={2} className="mt-2 ">
+                        <label className="mb-2">Date</label>
+                        <DatePicker className="form-control  "  onChange={(e) =>handleDateCalendar(e)}  selected ={calendarDetails.date} minDate={new Date()} showIcon />
+                    </Col>
+                    <div className="mt-3">
+                        <Col className="mt-3 ">
 
-                    <div className="mt-3  " >
+                            <div className="mt-3  " >
 
-                        <Button variant="primary"> <Icon icon="ic:baseline-search" height={21} />Search </Button>
-                        <Button variant="danger" className="ms-4" onClick={handleShow}>
-                            Add Booking
-                        </Button>
+                                <Button variant="primary"> <Icon icon="ic:baseline-search" height={21} />Search </Button>
+                                <Button variant="danger" className="ms-4" onClick={handleShow}>
+                                    Add Booking
+                                </Button>
+                            </div>
+
+                        </Col>
                     </div>
-
-                </Col>                    
-                </div>
                 </div>
             </Row>
-          
-            <Row className="p-2">
+
+            <Row className="p-2 mx-0">
                 <Calendar
                     localizer={localizer}
                     // events={myEventsList}
-                    views={{day : true,week : true,month : true}}
+                    views={{ day: true, week: true, month: true }}
                     startAccessor="start"
                     endAccessor="end"
-                    defaultView ={Views.DAY}
+                    defaultView={Views.DAY}
                     style={{ height: 550 }}
                 />
             </Row>
@@ -290,9 +311,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 </Offcanvas.Header>
                 <Offcanvas.Body >
                     <Row>
-                        <Col sm={12} xl={8}>
+                        <Col sm={12} md={12} lg={8} xl={8}>
                             <Row>
-                                <Col  sm={12} xl={6}>
+                                <Col sm={12} xl={6}>
                                     <Form.Label className="fw-medium">Booking Type<span className="text-danger ms-1">*</span></Form.Label>
                                     <Form.Select aria-label="Default select example" name="bookingType" value={bookingDetails.bookingType} onChange={handleChange}>
                                         {BookingType.map((booking) => {
@@ -367,8 +388,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                     <Form.Label className="mb-2">Start Time<span className="text-danger ms-1">*</span></Form.Label>
 
                                     <Select
-                                        value={Time.find(option => option.value === startTime)}
-
+                                        value={Time.find(option => option.value === startTime) || startTime}
                                         onChange={(selectedOption, actionMeta) => handleReactSelectChange(selectedOption, actionMeta)}
                                         options={Time}
                                         placeholder="hh:mm"
@@ -380,7 +400,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 <Col sm={12} md={6} lg={3} xl={3}>
                                     <Form.Label className="mb-2 ">End Time<span className="text-danger ms-1">*</span></Form.Label>
                                     <Select
-                                        value={Time.find(option => option.value === endTime)}
+                                        value={Time.find(option => option.value === endTime) || endTime}
                                         onChange={(selectedOption, actionMeta) => handleReactSelectChange(selectedOption, actionMeta)}
                                         options={Time}
                                         placeholder="hh:mm"
@@ -390,78 +410,255 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                     {/* <input type="time" className="form-control " id="timePicker" placeholder="hh:mm" /> */}
                                 </Col>
                             </Row>
+                            {bookingDetails.bookingOccurence === "Multiple Booking" && <div>
+                                <div className="fw-medium mt-2">Select Days</div>
+                                <Moment format="ddd">{bookingDetails.startDate}</Moment>
+                            </div>}
                             <div className="mt-5">
                                 <Button variant="danger" className="">Check Availability</Button>
                             </div>
                             <div className="fw-medium">Available Facility</div>
                             <Row >
                                 <div className="my-2 fw-medium">Player Details</div>
-                                <Row className="mt-2">
-                                    <Col  sm={12} lg={6} xl={6}>
-                                        <Form.Label>First Name</Form.Label>
-                                        <Form.Control type="text" placeholder="Enter First Name" className="mt-1" name="firstName" value={bookingDetails.firstName} onChange={handleChange} />
-                                    </Col>
-                                    <Col  sm={12} lg={6} xl={6}>
-                                        <Form.Label>Last Name</Form.Label>
-                                        <Form.Control type="text" placeholder="Enter Last Name" className="mt-1" name="lastName" value={bookingDetails.lastName} onChange={handleChange} />
-                                    </Col>
-                                </Row>
-                                <Row className="mt-2">
-                                    <Col>
-                                        <Form.Label>Phone Number</Form.Label>
-                                        <Form.Control type="number" placeholder="Enter Phone Number" className="mt-1" name="phoneNumber" value={bookingDetails.phoneNumber} onChange={handleChange} />
-                                    </Col>
-                                    <Col>
-                                        <Form.Label>Email address</Form.Label>
-                                        <Form.Control type="text" placeholder="Enter Email address" className="mt-1" name="emailAddress" value={bookingDetails.emailAddress} onChange={handleChange} />
-                                    </Col>
-                                </Row>
+                                <Formik
+                                    validationSchema={schema}
+                                    onSubmit={handleSubmit}
+                                    initialValues={{
+                                        firstName: "",
+                                        lastName: "",
+                                        emailAddress: "",
+                                        phoneNumber: "",
+                                        pricingRule: "",
+                                        facility: "",
+                                    }}
+                                >
+                                    {({  handleChange, values, errors }) => (
+
+                                        <Form noValidate onSubmit={(e) =>handleSubmit(e,values)}>
+                                              {/* {console.log(values,"values")} */}
+                                              {/* {console.log(bookingDetails,"books")} */}
+                                            {/* { console.log(facility,"facility")}  */}
+                                            <Row className="mt-2">
+                                                <Col sm={12} lg={6} xl={6}>
+                                                    <Form.Label>First Name</Form.Label>
+                                                    <Form.Control type="text" placeholder="Enter First Name" className="mt-1" name="firstName" value={values.firstName} onChange={handleChange} isInvalid={!!errors.firstName} disabled={disable}/>
+                                                    <Form.Control.Feedback type={"invalid"} >{errors.firstName}</Form.Control.Feedback>
+
+                                                </Col>
+                                                <Col sm={12} lg={6} xl={6}>
+                                                    <Form.Label>Last Name</Form.Label>
+                                                    <Form.Control type="text" placeholder="Enter Last Name" className="mt-1" name="lastName" value={values.lastName} onChange={handleChange} isInvalid={!!errors.lastName} disabled={disable} />
+                                                    {errors.lastName && <Form.Control.Feedback type={"invalid"} >{errors.lastName}</Form.Control.Feedback>}
+                                                </Col>
+                                            </Row>
+                                            <Row className="mt-2">
+                                                <Col>
+                                                    <Form.Label>Phone Number</Form.Label>
+                                                    <Form.Control type="number" placeholder="Enter Phone Number" className="mt-1" name="phoneNumber" value={values.phoneNumber} onChange={handleChange} isInvalid={!!errors.phoneNumber} disabled={disable} />
+                                                    {errors.phoneNumber && <Form.Control.Feedback type={"invalid"} >{errors.phoneNumber}</Form.Control.Feedback>}
+                                                </Col>
+                                                <Col>
+                                                    <Form.Label>Email address</Form.Label>
+                                                    <Form.Control type="text" placeholder="Enter Email address" className="mt-1" name="emailAddress" value={values.emailAddress} onChange={handleChange} isInvalid={!!errors.emailAddress} disabled={disable}/>
+                                                    <Form.Control.Feedback type={"invalid"} >{errors.emailAddress}</Form.Control.Feedback>
+                                                </Col>
+                                            </Row>
+                                            <Row className="mt-3 d-flex justify-content-between ">
+                                                <Col xs={6} className="">
+                                                    <Form.Label className="px-0 fw-medium">Facility</Form.Label>
+                                                    <div className="h-35 border p-2" >
+                                                        {Object.values(apiResponse.facilities).map((type: any, index: any) => {
+
+                                                            return (
+                                                                <div key={index}>
+                                                                    {type.map((facilities: any) => {
+                                                                    //    console.log(facility,"inmap")
+                                                                    //    console.log(values.facility,"valinmap")
+                                                                        return (
+                                                                            <Form.Check
+                                                                                type={"radio"}
+                                                                                // id={`${type}`}
+                                                                                label={`${facilities?.name}`}
+                                                                                value={`${facilities?.name}`}
+                                                                              //  value={values.facility}
+                                                                                name={"facility"}
+                                                                                onClick={() => handleBookFacility(facilities)} 
+                                                                                onChange={() => handleChange({ target: { name: 'facility', value: facilities?.name } })}                                         
+                                                                                defaultChecked={values.facility === `${facilities?.name}`}
+                                                                                isInvalid={!!errors.facility}
+                                                                                disabled={disable}
+                                                                            />)
+                                                                    })}
+
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                    {values.facility === "" && <span className="text-danger" >{errors.facility}</span>}
+                                                </Col>
+                                                <Col xs={6} className="">
+                                                    <Form.Label className="px-0 fw-medium">Pricing Rule</Form.Label>
+                                                    <div className="h-35 border p-2">
+
+                                                        <div className="fw-medium">{bookingDetails.facilityCheck}</div>
+                                                        {Object.values(apiResponse.pricingrule).map((pricing, index) => {
+                                                        
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Form.Check
+                                                                        type={"radio"}
+                                                                        // id={`${type}`}
+                                                                        label={`${pricing?.pricingRule?.ruleName}`}
+                                                                        value={`${pricing?.pricingRule?.ruleName}`}
+                                                                       // value={values.pricingRule}
+                                                                        name={"pricingRule"}  
+                                                                        onChange={() => handleChange({ target: { name: 'pricingRule', value: pricing?.pricingRule?.ruleName } })}                                                                   
+                                                                        defaultChecked={values.pricingRule === `${pricing?.pricingRule?.ruleName}`}
+                                                                        isInvalid={!!errors.pricingRule}
+                                                                        onClick={() => handleBookingCost(pricing)}
+                                                                        disabled={disable}
+                                                                    />
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                     <span className="text-danger" >{errors.pricingRule}</span>
+                                                </Col>
+                                            </Row>
+                                           {!disable ? <div className="text-end mt-3"><Button variant="success" type="submit" >save</Button></div>
+                                           : <div className="text-end mt-3"><Button variant="warning"  >Edit</Button></div>}
+                                        </Form>
+
+                                    )}
+                                </Formik>
                             </Row>
-                            <Row className="mt-3 d-flex justify-content-between ">
-                                <Col xs={6} className="">
-                                    <Form.Label className="px-0 fw-medium">Facility</Form.Label>
-                                    <div className="h-35 border p-2">
-                                        {Object.values(apiResponse.facilities).map((type: any, index: any) => {
-                                            console.log(type[index].name, index, "typein")
-                                            return (
-                                                <div key={index}>
-                                                    {type.map((facility: any) => {
-                                                        console.log(facility?.name, "facilityin")
-                                                        return (
+                            <div><Button variant="danger" onClick={handleAddPlayerOpen}>Add Player</Button></div>
+                            <Table responsive bordered hover striped className="mt-2">
+                                <thead className="border">
+                          
+                                    {Array.isArray(TableAddPlayers) && TableAddPlayers.map((head)=>
+                                    {
+                                        return (
+                                           
+                                                <th className="border p-2">{head.label}</th>                                       
+                                        )
+                                    })}
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>Table cell</td>
+                                        <td>Table cell</td>
+                                        <td>Table cell</td>
+                                        <td>Table cell</td>
+                                        <td>Table cell</td>
+                                        <td><div className="bg-warning w-50 px-2 mx-auto rounded-2 mt-1"><Icon icon="uil:edit"   /></div><div className="bg-danger w-50 px-2 mx-auto  mt-1 rounded-2"><Icon icon="mi:delete" /></div></td>
+                                    </tr>
+
+                                </tbody>
+                            </Table>
+                            <Offcanvas show={addShow} onHide={handleAddPlayerClose} placement="end">
+                                <Offcanvas.Header closeButton>
+                                    <Offcanvas.Title>Add Player</Offcanvas.Title>
+                                </Offcanvas.Header>
+                                <Offcanvas.Body>
+                                    <Form.Check
+                                        inline
+                                        label="Name not disclosed"
+                                        name="nameDiscloseCheck"
+                                        type={"checkbox"}
+                                        className="mt-2 "
+                                        checked={addPlayers.nameDiscloseCheck === true}
+                                        value={addPlayers.nameDiscloseCheck}
+                                        onChange={(e) =>handleAddPlayer(e)}
+                                    />
+                                    <Row className="mt-2">
+                                        <Col>
+                                            <Form.Label className="fw-medium">firstName</Form.Label>
+                                            <Form.Control type="text" placeholder="Enter firstName" value={addPlayers.firstName} name="firstName"  onChange={(e)=>handleAddPlayer(e)} disabled={addPlayers.nameDiscloseCheck === true}/>
+                                        </Col>
+                                        <Col>
+                                            <Form.Label className="fw-medium">lastName</Form.Label>
+                                            <Form.Control type="text" placeholder="Enter lastName" value={addPlayers.lastName} name="lastName" onChange={(e)=>handleAddPlayer(e)} disabled={addPlayers.nameDiscloseCheck === true}/>
+                                        </Col>
+                                    </Row>
+                                    <Form.Check
+                                        inline
+                                        label="Same as Primary"
+                                        name="sameAsPrimary"
+                                        type={"checkbox"}
+                                        className="mt-2"
+                                        value={addPlayers.sameAsPrimary}
+                                        onChange={(e) =>handleAddPlayer(e)}
+                                        checked={addPlayers.sameAsPrimary === true}
+                                        
+                                    />
+                                    <Row className="mt-3 d-flex justify-content-between ">
+                                        <Col xs={6} className="">
+                                            <Form.Label className="px-0 fw-medium">Facility</Form.Label>
+                                            <div className="h-35 border p-2">
+                                                {Object.values(apiResponse.facilities).map((type: any, index: any) => {
+
+                                                    return (
+                                                        <div key={index}>
+                                                            {type.map((facility: any) => {
+
+                                                                return (
+                                                                    <Form.Check
+                                                                        type={"radio"}
+                                                                        // id={`${type}`}
+                                                                        label={`${facility?.name}`}
+                                                                        value={bookingDetails.facilities}
+                                                                        name="facilities"
+                                                                        disabled={addPlayers.sameAsPrimary === true}
+                                                                        onClick={() => handleBookFacility(facility)}
+
+                                                                    />)
+                                                            })}
+
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+
+                                        </Col>
+                                        <Col xs={6} className="">
+                                            <Form.Label className="px-0 fw-medium">Pricing Rule</Form.Label>
+                                            <div className="h-35 border p-2">
+
+                                                <div className="fw-medium">{bookingDetails.facilityCheck}</div>
+                                                {Object.values(apiResponse.pricingrule).map((pricing, index) => {
+                                                    //   console.log(pricing.pricingRule[index]?.cost, "pricein")
+                                                    console.log(index,"index")
+                                                    return (
+                                                        <div key={index}>
                                                             <Form.Check
                                                                 type={"radio"}
                                                                 // id={`${type}`}
-                                                                label={`${facility?.name}`}
-                                                                onClick={() => handleBookFacility(facility)}
-                                                            />)
-                                                    })}
-                                                </div>
-                                            )
-                                        })}
-                                    </div>
-                                </Col>
-                                <Col xs={6} className="">
-                                    <Form.Label className="px-0 fw-medium">Pricing Rule</Form.Label>
-                                    <div className="h-35 border p-2">
+                                                                label={`${pricing?.pricingRule?.ruleName}`}
+                                                                value={bookingDetails.pricingRule}
+                                                                name="pricingRule"
+                                                                disabled={addPlayers.sameAsPrimary === true}
+                                                               
+                                                            />
+                                                           
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
 
-                                        <div className="fw-medium">{facility}</div>
-                                        {Object.values(apiResponse.pricingrule).map((pricing, index) => {
-                                            //  console.log(pricing?.pricingRule?.ruleName, "pricein")
-                                            return (
-                                                <div key={index}>
-                                                    <Form.Check
-                                                        type={"radio"}
-                                                        // id={`${type}`}
-                                                        label={`${pricing?.pricingRule?.ruleName}`}
-                                                    />
-                                                </div>
-                                            )
-                                        })}
+                                        </Col>
+                                    </Row>
+                                    <div className="text-center mt-2 ">
 
+                                        <Button variant="success" className="w-75">Add</Button>
                                     </div>
-                                </Col>
-                            </Row>
-                            <div className="text-end mt-3"><Button variant="success">save</Button></div>
+                                    <div className="text-center mt-2">
+
+                                        <Button variant="danger" className="w-75">Close</Button>
+                                    </div>
+                                </Offcanvas.Body>
+                            </Offcanvas>
                             <Row className="mt-4 mx-1">
                                 <Form.Label className="px-0 fw-medium">Notes</Form.Label>
                                 <Form.Control
@@ -472,10 +669,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                     value={bookingDetails.notes}
                                     onChange={(e) => handleChange(e)}
                                 />
-
                             </Row>
+
                         </Col>
-                        <Col xs={4} className="border border-2 p-3">
+                        <Col sm={12} md={12} lg={4} xl={4}  className="border border-2 p-3">
                             <div>Booking Type</div>
                             <div className="fw-bold mt-2">{bookingDetails.bookingType}</div>
                             <hr />
@@ -488,8 +685,48 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                             <div className="fw-bold mt-2">{bookingDetails.facilityType}</div>
                             <hr />
                             <div className="fw-bold">Player's Facility and Pricing Details</div>
+                            <Table responsive bordered hover striped className="mt-2">
+                                <thead>
+                                    {/* <tr>
+
+                                        <th>S.no</th>
+                                        <th> Name</th>
+                                        <th>Facility </th>
+                                        <th>Pricing Rule</th>
+                                        <th>Per Hour</th>
+
+                                    </tr> */}
+                                  
+                                    
+                                   
+                                    {Array.isArray(TablePricing) && TablePricing.map((head)=>
+                                    {
+                                        //console.log(head.label,"head")
+                                        return (
+                                           
+                                               <th className="p-2 border">{head.label}</th>
+                                          
+                                        )
+                                    })}
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>{bookingDetails.firstName}</td>
+                                        <td>{bookingDetails.facilityCheck}</td>
+                                        <td>{bookingDetails.pricingRuleCheck}</td>
+                                        <td>${perCost}</td>
+                                    </tr>
+                                    <tr>
+                                        {/* <td>2</td> */}
+                                        <td colSpan={4}>Total Price</td>
+                                        <td><span className="bg-dark text-white p-1 rounded-2">$45</span></td>
+                                    </tr>
+                                </tbody>
+                            </Table>
                         </Col>
                     </Row>
+                    {/* {console.log(apiResponse?.pricingrule[1]?.pricingRule.cost,"445")} */}
                 </Offcanvas.Body>
                 <div className="bg-gainsboro text-end p-2">
                     <Button variant="danger" onClick={handleSubmit}>Proceed to Book</Button>

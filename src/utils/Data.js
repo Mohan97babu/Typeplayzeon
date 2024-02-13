@@ -47,3 +47,6 @@ export const Time =[{value:"12:30 AM",label:"12:30 AM"},
                     {value:"10:30 PM",label:"10:30 PM"},
                     {value:"11:00 PM",label:"11:00 PM"},
                     {value:"11:30 PM",label:"11:30 PM"} ]
+export const Days = ["Mon","Tue" ,"Wed" ,"Thu" ,"Fri" ,"Sat"]
+export const TableAddPlayers =[{label:"S.no"} ,{label :"First Name"},{label:"Last Name"},{label:"Facility Name"},{label:"Pricing RuleName"},{label:"Price"},{label:"Actions"}];
+export const TablePricing =[{label:"S.no"},{label:"Name"},{label:"Facility"},{label:"PricingRule"},{label:"Per Hour"}];

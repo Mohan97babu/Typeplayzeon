@@ -24,7 +24,11 @@ interface bookingDetails
     lastName:string;
     emailAddress:string;
     phoneNumber:string;
+    pricingRule:string,
+    facilities:string,
     notes:string;
+    facilityCheck:string;
+    pricingRuleCheck:string;
 }
 function App () {
   
@@ -44,7 +48,11 @@ function App () {
     lastName:"",
     emailAddress:"",
     phoneNumber:"",
+    pricingRule:"",
+    facilities :"",
     notes:"",
+    facilityCheck:"",
+    pricingRuleCheck:"",
   });
   useEffect(() =>
   {
@@ -58,18 +66,18 @@ function App () {
   return (
       <Container fluid className='p-0'>
     <BrowserRouter>
-      {isSignedIn && currentPath !== "/" ? <NavBar setIsSignedIn={setIsSignedIn} /> : null}
+      {isSignedIn && currentPath !== "/" ? <NavBar setIsSignedIn={setIsSignedIn} orgDetails={orgDetails}/> : null}
       <div className=' w-100  d-flex  '>
         {isSignedIn && currentPath !== "/" ? (
           <Col sm={12} md={3} lg={2} xl={2} className='vh-100 p-2 d-none d-sm-none d-md-block'>
-            <Sidebar currentPath={currentPath} orgDetails={orgDetails} setOrgDetails={setOrgDetails}/>
+            <Sidebar currentPath={currentPath} />
           </Col>
         ) : null}
         <Col className={`${isSignedIn && currentPath !== "/" ? "col-md-9 col-lg-10 col-xl-10 px-2 " : "col-12 w-100 vh-100"} bg-gainsboro   `} >
           <Routes>
             <Route path="/" element={<Login setIsSignedIn={setIsSignedIn} />} />
             <Route element={<PrivateRoutes isSignedIn={isSignedIn} />} >
-              <Route path="/center" element={<Addcenter  />} />
+              <Route path="/center" element={<Addcenter setOrgDetails={setOrgDetails} />} />
               <Route path="/reservation" element={<Reservation bookingDetails={bookingDetails} setBookingDetails={setBookingDetails}/>} />
             </Route>
               <Route path="*" element={<Pagenotfound/>} />
@@ -78,6 +86,7 @@ function App () {
       </div>
     </BrowserRouter>
   </Container>
+ //  <Reservation bookingDetails={bookingDetails} setBookingDetails={setBookingDetails} />
     
   );
 }
