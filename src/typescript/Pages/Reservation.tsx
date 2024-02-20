@@ -1,8 +1,8 @@
-import { Col, Row, Form, Button, Offcanvas, Table } from "react-bootstrap";
+import { Col, Row, Form, Button, Offcanvas, Table, Spinner } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import React, { useState, ChangeEvent, useEffect } from "react";
 import Select from 'react-select';
-import { FacilityType, BookingType } from "../../utils/Data";
+import {  BookingType } from "../../utils/Data";
 import { Time, Days, TableAddPlayers, TablePricing } from "../../utils/Data";
 import Moment from "react-moment";
 import moment from "moment";
@@ -11,6 +11,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Calendar, momentLocalizer, Views } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import {  eachDayOfInterval, getDay } from 'date-fns';
 import "../../assets/Css/App.css";
 import { Formik } from "formik";
 import * as yup from "yup";
@@ -34,6 +35,7 @@ interface bookingDetails {
     notes: string;
     facilityCheck: string;
     pricingRuleCheck: string;
+    selectedDays:any[];
 }
 interface calendarDetails {
     facilityType: string;
@@ -45,19 +47,47 @@ interface apiResponse {
     facilityType: any[];
     facilities: any;
     pricingrule: [];
+    calendarDetails: [];
 }
+const CustomDayView = ({ date, events }) => {
+    return (
+        <div>
+            <h2>Fixed Header</h2>
+            <h2>{date.toLocaleDateString()}</h2>
+            {/* Render events or any other content */}
+            {events.map((event) => (
+                <div key={event.id}>{event.title}</div>
+            ))}
+        </div>
+    );
+};
+const CustomDayHeader = ({ date }) => {
+    return (
+        <div>
+            <h2>Custom Header</h2>
+            <h2>{date.toLocaleDateString()}</h2>
+        </div>
+    );
+};
 
 const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails: React.Dispatch<React.SetStateAction<bookingDetails>> }> = ({ bookingDetails, setBookingDetails }) => {
     const [show, setShow] = useState(false);
     const [addShow, setAddShow] = useState(false)
+    const [bookShow, setBookShow] = useState(false);
     const [startTime, setStartTime] = useState(null);
     const [endTime, setEndTime] = useState(null);
     const [perCost, setPerCost] = useState("");
     const [disable, setDisable] = useState(false);
-    const [searchIds,setSearchIds] = useState([]);
+    const [sportsId, setSportsId] = useState(0);
+    const [spinner, setSpinner] = useState(true);
+    const [time, setTime] = useState({
+        start: "",
+        end: "",
+    })
+    const [eventData, setEventData] = useState([]);
     const [addPlayers, setAddPlayers] = useState({
-        firstName: "",
-        lastName: "",
+        firstName: "" ,
+        lastName: "" ,
         nameDiscloseCheck: false,
         sameAsPrimary: false,
         addFacilityCheck: "",
@@ -77,7 +107,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const [apiResponse, setApiResponse] = useState<apiResponse>({
         facilityType: [],
         facilities: {},
-        pricingrule: []
+        pricingrule: [],
+        calendarDetails: [],
     })
     const centerId = localStorage.getItem("centerId");
     const schema = yup.object().shape({
@@ -92,17 +123,19 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
 
 
     const handleAddPlayerOpen = () => { setAddShow(true) }
-    const handleAddPlayerClose = () => { setAddShow(false) }
+    const handleAddPlayerClose = () => { setAddShow(false);  clearState() }
     const handleClose = () => setShow(false);
     const handleShow = () => setShow(true);
+    const handleOpenBookPreview = () => setBookShow(true);
+    const handleCloseBookPreview = () => {setBookShow(false);};
+
     const tempURL = process.env.REACT_APP_BASEURLTEMP;
     const orgURL = process.env.REACT_APP_BASEURLORG;
     const [errors, setErrors] = useState({});
-    const handleSubmit = async (event: any, values: any,) => {
+    const handleSubmit = async (event: any, values: any) => {
         event.preventDefault();
         console.log(bookingDetails, values, "details");
         setBookingDetails({ ...bookingDetails, firstName: values.firstName, lastName: values.lastName, emailAddress: values.emailAddress, phoneNumber: values.phoneNumber, pricingRuleCheck: values.pricingRule, facilityCheck: values.facility })
-        //    setSubmitting(false);
         //     event.preventDefault(); // Prevent default form submission
 
         // try {
@@ -120,8 +153,11 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         //     setErrors(errorsObj);
         // }
         setDisable(true);
+        // setSubmitting(false);
     }
     // console.log(bookingDetails,"out")
+    console.log(disable, "disable");
+
     const handleChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
         //   const { name, value } = e.target;
         console.log(e.target.name, e.target.value, "value");
@@ -133,24 +169,28 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         }
         console.log("edited")
     }
-    const handleRadioAdd = (e) => {
+    const handleRadioAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
         setAddPlayers({ ...addPlayers, [e.target.name]: e.target.value });
+        clearState();
+        
+    }
+    const clearState = () =>
+    {
+        setAddPlayers({firstName:"",lastName:"",nameDiscloseCheck:false,sameAsPrimary:false,addFacilityCheck:"",addPricingCheck:"",cost:""});
     }
     const handleBookingCost = (pricing: any) => {
         console.log(pricing?.pricingRule?.cost, "cost");
         setPerCost(pricing?.pricingRule?.cost);
         setAddPlayers({ ...addPlayers, cost: pricing?.pricingRule?.cost })
     }
-    const handleAddPlayer = (e) => {
-        if (e.target.checked === true) {
-            setAddPlayers({ ...addPlayers, [e.target.name]: true })
-        }
-        else {
+    const handleAddPlayer = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+       
             setAddPlayers({ ...addPlayers, [e.target.name]: e.target.value });
-        }
+        
     }
-    console.log(addPlayers, "addplayers")
+    //  console.log(addPlayers, "addplayers")
     const listFacilities = async (sportsId: any) => {
+        setSportsId(sportsId)
         await axios.get(`${tempURL}/api/v1/facilities?sportId.equals=${sportsId}&centerId.equals=${centerId}`)
             .then((response) => setApiResponse((prev) => ({ ...prev, facilities: response.data })))
             .catch((err) => console.log(err))
@@ -187,15 +227,18 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             await axios.get(`${tempURL}/api/v1/sport-photos`)
                 .then((response) => {
                     setApiResponse({ ...apiResponse, facilityType: response.data });
+                    setSpinner(false);
                     listFacilities(1)
                 })
                 .catch((err) => console.log(err));
         }
         listSports();
+        fetchEventData();
     }, []);
 
+
     const handleBookFacility = async (type: any) => {
-        //  setFacility(type.name);
+        setBookingDetails({ ...bookingDetails, facilities: type.name });
         console.log(type.id, "type")
         await axios.get(`${tempURL}/api/v1/pricing-rules?centerId=${centerId}&facilityIds=${type?.id}`)
             .then((response) => { setApiResponse({ ...apiResponse, pricingrule: response.data }) })
@@ -220,17 +263,215 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         else {
             setBookingDetails({ ...bookingDetails, endDate: selectedDate })
         }
+
     };
+    // const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    // const handleDateChange = (selectedDate) => {
+    //     const interval = 13; // Example: 2 weeks minus 1 day
+    //     const days = [];
+    //     if (bookingDetails.startDate === null) {
+    //       setBookingDetails(prevState => ({
+    //         ...prevState,
+    //         startDate: selectedDate,
+    //         selectedDays: []
+    //       }));
+    //     } else {
+    //       const startDate = new Date(bookingDetails.startDate);
+    //       const endDate = new Date(selectedDate);
+    //       endDate.setDate(startDate.getDate() + interval - 1); // Set end date based on start date and interval
+    //       for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
+    //         days.push(daysOfWeek[date.getDay()]);
+    //       }
+    //       setBookingDetails(prevState => ({
+    //         ...prevState,
+    //         endDate: selectedDate,
+    //         selectedDays: days
+    //       }));
+    //     }
+    //   };
+    // const getDatesBetween = (startDate, endDate) => {
+    //     return eachDayOfInterval({ start: startDate, end: endDate });
+    // };
+    // const datesInRange = bookingDetails.startDate && bookingDetails.endDate ?
+    //     getDatesBetween(new Date(bookingDetails.startDate), new Date(bookingDetails.endDate)) :
+    //     [];
+    // const getDatesBetween = (startDate, endDate) => {
+    //     return eachDayOfInterval({ start: startDate, end: endDate });
+    // };
+
+    // const getSelectedDays = (startDate, endDate) => {
+    //     const datesInRange = getDatesBetween(startDate, endDate);
+    //     return datesInRange.map(date => daysOfWeek[getDay(date)]);
+    // };
+
+
+    // const selectedDays = datesInRange.map(date => daysOfWeek[getDay(date)]);
+    // const handleCheckboxChange = (day) => {
+    //     const index = selectedDays.indexOf(day);
+    //     if (index === -1) {
+    //         setBookingDetails({
+    //             ...bookingDetails,
+    //             startDate: null, // Reset startDate and endDate when selecting individual days
+    //             endDate: null
+    //         });
+    //         setBookingDetails(prevState => ({
+    //             ...prevState,
+    //             selectedDays: [...prevState.selectedDays, day]
+    //         }));
+    //     } else {
+    //         setBookingDetails(prevState => ({
+    //             ...prevState,
+    //             selectedDays: prevState.selectedDays.filter(d => d !== day)
+    //         }));
+    //     }
+    // };
+    const daysOfWeek = Days;
+ 
+
+    // const handleCheckboxChange = (dayAbbreviation) => {
+    //     const updatedSelectedDays = [...bookingDetails.selectedDays]; // Create a copy of the current selectedDays array
+    
+    //     // Find the corresponding full day name for the abbreviation
+    //     const fullDayName = dayOptions.find(option => option.label === dayAbbreviation)?.value;
+    
+    //     if (fullDayName) {
+    //         const dayIndex = updatedSelectedDays.indexOf(fullDayName); // Check if the full day name is already in the array
+    
+    //         if (dayIndex === -1) {
+    //             // If the day is not in the array, add it
+    //             updatedSelectedDays.push(fullDayName);
+    //         } else {
+    //             // If the day is already in the array, remove it
+    //             updatedSelectedDays.splice(dayIndex, 1);
+    //         }
+    
+    //         // Update the state with the new array
+    //         setBookingDetails(prevState => ({
+    //             ...prevState,
+    //             selectedDays: updatedSelectedDays
+    //         }));
+    //     }
+    // };
+    const handleCheckboxChange = (dayOfWeek) => {
+        const updatedSelectedDays = [...bookingDetails.selectedDays]; // Create a copy of the current selectedDays array
+    
+        // Find the corresponding full day name for the abbreviation
+        const fullDayName = dayOptions.find(option => option.label === dayOfWeek)?.value;
+    
+        if (fullDayName) {
+            const dayIndex = updatedSelectedDays.indexOf(fullDayName); // Check if the full day name is already in the array
+    
+            if (dayIndex === -1) {
+                // If the day is not in the array, add it
+                updatedSelectedDays.push(fullDayName);
+            } else {
+                // If the day is already in the array, remove it
+                updatedSelectedDays.splice(dayIndex, 1);
+            }
+    
+            // Update the state with the new array
+            setBookingDetails(prevState => ({
+                ...prevState,
+                selectedDays: updatedSelectedDays
+            }));
+        }
+    };
+   
+    const dayOptions = [
+        { value: 'Sunday', label: 'Sun' },
+        { value: 'Monday', label: 'Mon' },
+        { value: 'Tuesday', label: 'Tue' },
+        { value: 'Wednesday', label: 'Wed' },
+        { value: 'Thursday', label: 'Thu' },
+        { value: 'Friday', label: 'Fri' },
+        { value: 'Saturday', label: 'Sat' },
+      ];
+ 
+    // const renderDaysOfWeek = (startDate, endDate) => {
+    //     const daysBetween = eachDayOfInterval({ start: startDate, end: endDate });
+    //     const renderedDays = [];
+        
+    //     // Iterate over each day in the date range
+    //     daysBetween.forEach(day => {
+    //         const dayIndex = getDay(day);
+    //         const dayOfWeek = daysOfWeek[dayIndex]; // Get the day of the week (e.g., "Monday", "Tuesday")
+    //         const dayAbbreviation = dayOptions.find(option => option.value === dayOfWeek)?.label; // Find the corresponding abbreviation (e.g., "Mon", "Tue")
+    //         const isSelected = bookingDetails.selectedDays.includes(dayOfWeek);
+    //         console.log("Day of week:", dayOfWeek);
+    //         console.log("Abbreviation:", dayIndex);
+    
+    //         // Render the checkbox for the day
+    //         renderedDays.push(
+    //             <div key={dayOfWeek} className="form-check-inline">
+    //                 <input
+    //                     type="checkbox"
+    //                     onChange={() => handleCheckboxChange(dayOfWeek)}
+    //                     checked={isSelected}
+    //                 />
+    //                 <label>{dayOfWeek}</label>
+    //             </div>
+    //         );
+    //     });
+    
+    //     return renderedDays;
+    // };
+    const renderDaysOfWeek = (startDate, endDate) => {
+        const daysBetween = eachDayOfInterval({ start: startDate, end: endDate });
+        const renderedDays = [];
+        const renderedDayNames = []; // Array to keep track of already rendered day names
+    
+        // Iterate over each day in the date range
+        daysBetween.forEach(day => {
+            const dayIndex = getDay(day);
+            const dayOfWeek = daysOfWeek[dayIndex]; // Get the day of the week (e.g., "Monday", "Tuesday")
+            const dayAbbreviation = dayOptions.find(option => option.value === dayOfWeek)?.label; // Find the corresponding abbreviation (e.g., "Mon", "Tue")
+    
+            console.log("Day of week:", dayOfWeek);
+            console.log("Abbreviation:", dayAbbreviation);
+    
+            if (!renderedDayNames.includes(dayOfWeek)) {
+                // Check if the day has already been rendered
+                renderedDayNames.push(dayOfWeek); // Add the day to the list of rendered days
+    
+                // Determine if the day is selected
+                const isChecked = bookingDetails.selectedDays.some(fullDayName => {
+                    return fullDayName.includes(dayOfWeek);
+                });
+                // Render the checkbox for the day
+                renderedDays.push(
+                    <div key={dayOfWeek} className="form-check-inline">
+                        <input
+                            type="checkbox"
+                            onChange={() => handleCheckboxChange(dayOfWeek)}
+                            checked={isChecked}
+                        />
+                        <label>{dayOfWeek}</label>
+                    </div>
+                );
+            }
+        });
+    
+        return renderedDays;
+    };
+   
+    console.log(bookingDetails.selectedDays,"dayarr")
+    const handleSearchCalendar = (e: { preventDefault: () => void; }) => {
+        e.preventDefault();
+        // axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${currentMoment.format()}&end.lessThanOrEqual=${nextDayMoment.format()}&Id.in=${facilityItemIds}`)
+        // .then((response) => console.log(response))
+        // .catch((err) => console.log(err))
+        fetchEventData();
+    }
     const moment = require('moment');
 
     const currentMoment = moment.utc();
-    
-    
-    const nextDayMoment = currentMoment.clone().add(1, 'day').subtract(1, 'second').subtract(1,'minute');
-    
 
-    console.log("Current Moment (UTC):", currentMoment.format());
-    console.log("Next Day Moment with 1 second subtracted (UTC):", nextDayMoment.format());
+
+    const nextDayMoment = currentMoment.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute');
+
+
+    // console.log("Current Moment (UTC):", currentMoment.format());
+    // console.log("Next Day Moment with 1 second subtracted (UTC):", nextDayMoment.format());
     //  console.log(bookingDetails, "book");
     const localizer = momentLocalizer(moment)
     const handleCheckDays = () => {
@@ -240,10 +481,53 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const handlePlayerSubmit = () => {
         setAddPlayersData([...addPlayersData, addPlayers]);
     }
-    console.log(addPlayersData, "addpalyers")
-  
-    let facilityItemIds =[];
-    console.log(facilityItemIds,"ids")
+    //  console.log(addPlayersData, "addpalyers")
+
+    let facilityItemIds = [];
+    //  console.log(facilityItemIds,"ids")
+    let title = [];
+    const fetchEventData = async () => {
+        try {
+            const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${currentMoment.format()}&end.lessThanOrEqual=${nextDayMoment.format()}&Id.in=${facilityItemIds}`);
+            const responseData = response.data;
+            console.log('responseData:', responseData);
+            // Extract resource data and timings
+            //  const events = responseData.events;
+            const resources = responseData.myresources;
+            const timings = responseData.timings;
+            console.log(resources, "resorces");
+            console.log(timings, "timings");
+            // console.log("events",events)
+            setTime({ ...time, start: timings.start, end: timings.end })
+            if (Array.isArray(resources)) {
+
+                const eventsWithDynamicTitles = resources.map((resource) => {
+                    title.push(resource?.title)
+                    return {
+                        id: resource.id,
+                        title: resource.title,
+                    };
+                });
+
+                console.log('eventsWithDynamicTitles:', eventsWithDynamicTitles);
+
+                console.log(title, "title")
+                setEventData(eventsWithDynamicTitles);
+            } else {
+                console.log('Invalid data structure or missing timing information.');
+            }
+
+            // Set the event data in state
+        } catch (error) {
+            console.error('Error fetching event data:', error);
+        }
+    };
+    console.log(eventData, "evtdata");
+    const events = [
+        { id: 1, title: 'Event 1', start: new Date(), end: new Date() },
+        { id: 2, title: 'Event 2', start: new Date(), end: new Date() }
+    ];
+
     return (
         <div className="bg-white mt-2 rounded-2 ">
             <Row className="p-3 mx-0">
@@ -253,7 +537,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                         <div ><Icon icon="material-symbols:square" style={{ color: " #fc9403" }} /><span>Player/Not paid</span></div>
                         <div> <Icon icon="material-symbols:square" style={{ color: "yellow" }} /><span>Coach</span></div>
                         <div>  <Icon icon="material-symbols:square" style={{ color: "purple" }} /><span>Admin</span></div>
-                        <div>    <Icon icon="material-symbols:square" style={{ color: "grey" }} /><span>Maintenance</span></div>
+                        <div>  <Icon icon="material-symbols:square" style={{ color: "grey" }} /><span>Maintenance</span></div>
                         <div> <Icon icon="material-symbols:square" style={{ color: "alice" }} /><span>Tournament</span></div>
                         <div> <Icon icon="material-symbols:square" style={{ color: "green" }} /><span>Player/Paid</span> </div>
                     </Col>
@@ -268,7 +552,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 <div className="d-md-flex justify-content-between">
 
                     <Col sm={12} md={2} lg={2} xl={3}>
-                        <label>Facility Type</label>
+                        <div>Facility Type {spinner ? <Spinner animation="border" variant="danger" size="sm" /> : null}</div>
                         <Form.Select aria-label="Default select example" className="mt-2" value={calendarDetails.facilityType} name="facilityType" onChange={(e) => handleCalendarChange(e)}>
                             {Array.isArray(apiResponse.facilityType) && apiResponse.facilityType.map((facility: any) => {
 
@@ -285,28 +569,28 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                         <label>Facilities</label>
                         <Form.Select aria-label="Default select example" className="mt-2">
                             <option value={""}>All Court</option>
-                            {Object.entries(apiResponse.facilities).map(([courtName, courtArray]) => (                               
-                                courtArray.map((facilityItem, index) => {
+                            {Object.entries(apiResponse.facilities).map(([courtName, courtArray]) => (
+                                courtArray.map((facilityItem: { id: any; name: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined; }, index: any) => {
                                     facilityItemIds.push(facilityItem.id);
                                     return (
 
-                                    <option key={`${courtName}-${index}`} value={facilityItem.name}>
-                                        {facilityItem.name} 
-                                    </option>
+                                        <option key={`${courtName}-${index}`} value={facilityItem.name}>
+                                            {facilityItem.name}
+                                        </option>
                                     )
-                                    })))}
+                                })))}
                         </Form.Select>
                     </Col>
                     <Col sm={12} md={2} lg={2} xl={2} className="mt-2 ">
                         <label className="mb-2">Date</label>
-                        <DatePicker className="form-control  " onChange={(e) => handleDateCalendar(e)} selected={calendarDetails.date} minDate={new Date()} showIcon />
+                        <DatePicker className="form-control  " onChange={(e: any) => handleDateCalendar(e)} selected={calendarDetails.date} minDate={new Date()} showIcon />
                     </Col>
                     <div className="mt-3">
                         <Col className="mt-3 ">
 
                             <div className="mt-3  " >
 
-                                <Button variant="primary"> <Icon icon="ic:baseline-search" height={21} />Search </Button>
+                                <Button variant="primary" onClick={handleSearchCalendar}> <Icon icon="ic:baseline-search" height={21} />Search </Button>
                                 <Button variant="danger" className="ms-4" onClick={handleShow}>
                                     Add Booking
                                 </Button>
@@ -320,12 +604,25 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             <Row className="p-2 mx-0">
                 <Calendar
                     localizer={localizer}
-                    // events={myEventsList}
-                    views={{ day: true, week: true, month: true }}
+                    events={events}
+                    views={{
+                        day: true,
+                        week: true,
+                        month: true
+                    }}
+                    components={{
+                        day: {
+                            header: CustomDayHeader,
+                            body: CustomDayView
+                        }
+                    }}
                     startAccessor="start"
                     endAccessor="end"
                     defaultView={Views.DAY}
+                    titleAccessor="title"
                     style={{ height: 550 }}
+
+
                 />
             </Row>
             <Offcanvas show={show} onHide={handleClose} backdrop="static" placement="end" className=" w-75">
@@ -434,9 +731,27 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 </Col>
                             </Row>
                             {bookingDetails.bookingOccurence === "Multiple Booking" && <div>
-                                <div className="fw-medium mt-2">Select Days</div>
-                                <Moment format="ddd">{bookingDetails.startDate}</Moment>
+                                <div className="fw-medium my-2">Select Days</div>
+                                {/* <Moment format="ddd">{bookingDetails.startDate}</Moment> */}
                             </div>}
+                            {/* {datesInRange.map((day, index) => (
+                                <div key={index}>
+                                    <input type="checkbox" onChange={() => handleCheckboxChange(day)} checked={selectedDays.includes(day)} />
+                                    <label>{format(day, 'EEE')}</label>
+                                </div>
+                            ))} */}
+                            {/* {bookingDetails.startDate && bookingDetails.endDate && getSelectedDays(bookingDetails.startDate, bookingDetails.endDate).map((day, index) => (
+                                <div key={index}>
+                                    <input type="checkbox" onChange={() => handleCheckboxChange(day)} checked={bookingDetails.selectedDays.includes(day)} />
+                                    <label>{day}</label>
+                                </div>
+                            ))} */}
+                            {bookingDetails.startDate && bookingDetails.endDate && (
+                                <div>                                  
+                                    {renderDaysOfWeek(bookingDetails.startDate, bookingDetails.endDate)}
+                                </div>
+                            )}
+
                             <div className="mt-5">
                                 <Button variant="danger" className="">Check Availability</Button>
                             </div>
@@ -549,7 +864,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                 </Col>
                                             </Row>
                                             {!disable ? <div className="text-end mt-3"><Button variant="success" type="submit" >save</Button></div>
-                                                : <div className="text-end mt-3"><Button variant="warning"  >Edit</Button></div>}
+                                                : <div className="text-end mt-3"><Button variant="warning" onClick={() => setDisable(false)} >Edit</Button></div>}
                                         </Form>
 
                                     )}
@@ -567,16 +882,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                     })}
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>1</td>
-                                        <td>Table cell</td>
-                                        <td>Table cell</td>
-                                        <td>Table cell</td>
-                                        <td>Table cell</td>
-                                        <td>Table cell</td>
-                                        <td><div className="bg-warning w-50 px-2 mx-auto rounded-2 mt-1"><Icon icon="uil:edit" /></div><div className="bg-danger w-50 px-2 mx-auto  mt-1 rounded-2"><Icon icon="mi:delete" /></div></td>
-                                    </tr>
-                                    {addPlayersData.map((data, index) => {
+
+                                    {addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; lastName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined) => {
                                         console.log(data, "datat")
                                         return (
                                             <tr key={index}>
@@ -605,18 +912,19 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                         name="nameDiscloseCheck"
                                         type={"checkbox"}
                                         className="mt-2 "
-                                        checked={addPlayers.nameDiscloseCheck === true}
+                                        checked={addPlayers.nameDiscloseCheck}
                                         value={addPlayers.nameDiscloseCheck}
-                                        onChange={(e) => handleAddPlayer(e)}
+                                       // onChange={(e) => handleAddPlayer(e)}
+                                       onClick={() =>setAddPlayers({...addPlayers,nameDiscloseCheck:true})}
                                     />
                                     <Row className="mt-2">
                                         <Col>
                                             <Form.Label className="fw-medium">firstName</Form.Label>
-                                            <Form.Control type="text" placeholder="Enter firstName" value={addPlayers.firstName} name="firstName" onChange={(e) => handleAddPlayer(e)} disabled={addPlayers.nameDiscloseCheck === true} />
+                                            <Form.Control type="text" placeholder="Enter firstName" value={!addPlayers.nameDiscloseCheck ?addPlayers.firstName :"Name Not Disclosed" } name="firstName" onChange={(e) => handleAddPlayer(e)} disabled={addPlayers.nameDiscloseCheck === true} />
                                         </Col>
                                         <Col>
                                             <Form.Label className="fw-medium">lastName</Form.Label>
-                                            <Form.Control type="text" placeholder="Enter lastName" value={addPlayers.lastName} name="lastName" onChange={(e) => handleAddPlayer(e)} disabled={addPlayers.nameDiscloseCheck === true} />
+                                            <Form.Control type="text" placeholder="Enter lastName" value={!addPlayers.nameDiscloseCheck ?addPlayers.lastName :"Name Not Disclosed"} name="lastName" onChange={(e) => handleAddPlayer(e)} disabled={addPlayers.nameDiscloseCheck === true} />
                                         </Col>
                                     </Row>
                                     <Form.Check
@@ -693,7 +1001,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                     </div>
                                     <div className="text-center mt-2">
 
-                                        <Button variant="danger" className="w-75">Close</Button>
+                                        <Button variant="danger" className="w-75"onClick={handleAddPlayerClose}>Close</Button>
                                     </div>
                                 </Offcanvas.Body>
                             </Offcanvas>
@@ -710,7 +1018,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                             </Row>
 
                         </Col>
-                        <Col sm={12} md={12} lg={4} xl={4} className="border border-2 p-3">
+                        <Col sm={12} md={12} lg={4} xl={4} className="border border-2  m-md-3 m-lg-0 p-3">
                             <div>Booking Type</div>
                             <div className="fw-bold mt-2">{bookingDetails.bookingType}</div>
                             <hr />
@@ -754,7 +1062,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                         <td>{bookingDetails.pricingRuleCheck}</td>
                                         <td>${perCost}</td>
                                     </tr>
-                                    {addPlayersData.map((data, index) => {
+                                    {addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined) => {
                                         return (
                                             <tr key={index}>
                                                 <td>{data.firstName}</td>
@@ -776,8 +1084,139 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
 
                 </Offcanvas.Body>
                 <div className="bg-gainsboro text-end p-2">
-                    <Button variant="danger" onClick={handleSubmit}>Proceed to Book</Button>
+                    <Button variant="danger" onClick={handleOpenBookPreview}>Proceed to Book</Button>
                 </div>
+                <Offcanvas show={bookShow} onHide={handleCloseBookPreview} placement="end" className="w-75">
+                    <Offcanvas.Header closeButton>
+                        <Offcanvas.Title>Booking Preview</Offcanvas.Title>
+                    </Offcanvas.Header>
+                    <Offcanvas.Body>
+                        <Row>
+                            <Col sm={12} md={8} lg={8} xl={8} className=" border-end ">
+                                <div className="text-center">
+                                    <img src={apiResponse?.facilityType[sportsId]?.url}></img>
+                                    <div>{apiResponse?.facilityType?.title}</div>
+                                    {console.log(apiResponse?.facilityType[sportsId], "type")}
+
+                                </div>
+                                <div className="border rounded-2 ">
+                                    <Row className="d-flex justify-content-between p-3">
+                                        <Col xs={4}>
+                                            <div>Booking Type</div>
+                                            <div>{bookingDetails.bookingType}</div>
+                                        </Col>
+                                        <Col xs={4}>
+                                            <div>Facility Type</div>
+                                            <div>{bookingDetails.facilities}</div>
+                                        </Col>
+                                        <Col xs={4}>
+                                            <div>Booking Occurence</div>
+                                            <div>{bookingDetails.bookingOccurence}</div>
+                                        </Col>
+
+                                    </Row>
+                                    <Row className="d-flex justify-content-between p-3">
+                                        <Col xs={4}>
+                                            <div>Start Date and Time</div>
+                                            {bookingDetails.startDate && <div className="fw-medium"><Moment format="MMMM DD YYYY ">{bookingDetails.startDate}</Moment>{bookingDetails.startTime} </div>}
+                                        </Col>
+                                        <Col xs={4}>
+                                            <div>End Date and Time</div>
+                                            {bookingDetails.endDate && <div className="fw-medium"><Moment format="MMMM DD YYYY ">{bookingDetails.endDate}</Moment>{bookingDetails.startTime} </div>}
+                                        </Col>
+                                        <Col xs={4}>
+                                            <div>Notes</div>
+                                            <div>{bookingDetails.notes}</div>
+                                        </Col>
+
+                                    </Row>
+                                    <div className="p-2">
+
+
+                                        <div className="fw-bold">Player's Facility and Pricing Details</div>
+                                        <Table responsive bordered hover striped className="mt-2">
+                                            <thead>
+                                                {/* <tr>
+
+                                        <th>S.no</th>
+                                        <th> Name</th>
+                                        <th>Facility </th>
+                                        <th>Pricing Rule</th>
+                                        <th>Per Hour</th>
+
+                                    </tr> */}
+                                                {Array.isArray(TablePricing) && TablePricing.map((head) => {
+                                                    //console.log(head.label,"head")
+                                                    return (
+                                                        <th className="p-2 border">{head.label}</th>
+                                                    )
+                                                })}
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>1</td>
+                                                    <td>{bookingDetails.firstName}</td>
+                                                    <td>{bookingDetails.facilityCheck}</td>
+                                                    <td>{bookingDetails.pricingRuleCheck}</td>
+                                                    <td>${perCost}</td>
+                                                </tr>
+                                                {addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined) => {
+                                                    return (
+                                                        <tr key={index}>
+                                                            <td>{data.firstName}</td>
+                                                            <td>{data.addFacilityCheck}</td>
+                                                            <td>{data.addPricingCheck}</td>
+                                                            <td>{data.cost}</td>
+                                                        </tr>
+                                                    )
+                                                })}
+                                                <tr>
+                                                    {/* <td>2</td> */}
+                                                    <td colSpan={4}>Total Price</td>
+                                                    <td><span className="bg-dark text-white p-1 rounded-2">${perCost}</span></td>
+                                                </tr>
+                                            </tbody>
+                                        </Table>
+                                    </div>
+
+                                </div>
+                            </Col>
+                            <Col sm={12} md={4} lg={4} xl={4}>
+                                <h5>Mode of Payment</h5>
+                                <div className="p-3 border rounded-2 ">
+                                    <div className="d-flex justify-content-between border p-2 my-3 rounded-2"><div><Icon icon="zmdi:card" style={{ color: "black" }} /><span className="ms-2">Card Payment</span></div>
+                                        <Form.Check
+                                            type={"radio"}
+                                            label={` `}
+                                            id={`disabled-default`}
+                                        />
+                                    </div>
+                                    <div className="d-flex justify-content-between border p-2 my-3 rounded-2"><div><Icon icon="bi:clock" style={{ color: "black" }} /><span className="ms-2">Pay Later</span></div>
+                                        <Form.Check
+                                            type={"radio"}
+                                            label={` `}
+                                            id={`disabled-default`}
+                                        />
+                                    </div>
+                                    <div className="d-flex justify-content-between border p-2 my-3 rounded-2"><div><Icon icon="iconoir:no-credit-card" style={{ color: "black" }} /><span className="ms-2">No Payment</span></div>
+                                        <Form.Check
+                                            type={"radio"}
+                                            label={` `}
+                                            id={`disabled-default`}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="text-center">
+                                    <Button variant="danger" className="mt-4">Book Now</Button>
+                                </div>
+                            </Col>
+                        </Row>
+
+                    </Offcanvas.Body>
+                    <div className="bg-gainsboro text-end p-2">
+                        <Button className="bg-dark" >Back</Button>
+                    </div>
+                </Offcanvas>
 
             </Offcanvas>
         </div>

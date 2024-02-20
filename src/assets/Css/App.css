@@ -89,8 +89,8 @@
 .rbc-month-view .rbc-header,
 .rbc-week-view .rbc-header,
 .rbc-day-view .rbc-header {
-  background-color: #f0f0f0;
-  color: yellow;
+  background-color: red;
+  color: white;
   
 }
 /* .rbc-toolbar button {

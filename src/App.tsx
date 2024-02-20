@@ -29,6 +29,7 @@ interface bookingDetails
     notes:string;
     facilityCheck:string;
     pricingRuleCheck:string;
+    selectedDays:any[];
 }
 function App () {
   
@@ -53,6 +54,7 @@ function App () {
     notes:"",
     facilityCheck:"",
     pricingRuleCheck:"",
+    selectedDays: []
   });
   useEffect(() =>
   {
@@ -86,7 +88,7 @@ function App () {
       </div>
     </BrowserRouter>
   </Container>
- //  <Reservation bookingDetails={bookingDetails} setBookingDetails={setBookingDetails} />
+  // <Reservation bookingDetails={bookingDetails} setBookingDetails={setBookingDetails} />
     
   );
 }

@@ -90,7 +90,7 @@
 // }
 // export default Addcenter
 import React, { useState, useEffect } from 'react';
-import { Card } from "react-bootstrap";
+import { Card,Placeholder } from "react-bootstrap";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -110,60 +110,15 @@ interface AddCenterProps {
 
 const AddCenter: React.FC<AddCenterProps> = ({ setOrgDetails }) => {
   const [centerData, setCenterData] = useState<Center[]>([]);
+  const [spinner,setSpinner] = useState(true);
   const navigate = useNavigate();
   const orgId = localStorage.getItem("orgId");
   const tempURL = process.env.REACT_APP_BASEURLTEMP;
 
-  // Function to format days
-  // const formatDays = (inputString: string ): string => {
-  //   console.log(inputString,"infun");
-
-  //   if (!inputString) return ""; // Return empty string if inputString is null or undefined
-
-  //   const dayMap: { [key: string]: string } = {
-  //     'mon': 'Monday',
-  //     'tue': 'Tuesday',
-  //     'wed': 'Wednesday',
-  //     'thur': 'Thursday',
-  //     'fri': 'Friday',
-  //     'sat': 'Saturday',
-  //     'sun': 'Sunday'
-  //   };
-
-  //   const daysArray = inputString.split(",").map(day => day.trim());
-  //   daysArray.sort();
-
-  //   let consecutiveDays: string[] = [];
-  //   let consecutiveCount = 1;
-
-  //   for (let i = 0; i < daysArray.length; i++) {
-  //     if (i < daysArray.length - 1 && daysArray[i + 1].charCodeAt(0) - daysArray[i].charCodeAt(0) === 1) {
-  //       consecutiveCount++;
-  //     } else {
-  //       if (consecutiveCount > 1) {
-  //         consecutiveDays.push(`${dayMap[daysArray[i - consecutiveCount + 1]]}-${dayMap[daysArray[i]]}`);
-  //         consecutiveCount = 1;
-  //       } else {
-  //         consecutiveDays.push(dayMap[daysArray[i]]);
-  //       }
-  //     }
-  //   }
-
-  //   return consecutiveDays.join(", ");
-  // };
-  // const formatDays = (inputString: string | undefined): string => {
-  //   if (!inputString) return ""; // Return empty string if inputString is null or undefined
-
-
-  //   const daysArray = inputString.split(",");
-
-  //   // Join the days with commas
-  //   return daysArray.join(",");
-  // };
   // const formatDays = (inputString) => {
   //   const toArray = inputString.split(",");
   //   console.log(toArray, "arr");
-
+    
   //   const dayCode = [
   //     { key: "0", value: "Mon" },
   //     { key: "1", value: "Tue" },
@@ -173,65 +128,79 @@ const AddCenter: React.FC<AddCenterProps> = ({ setOrgDetails }) => {
   //     { key: "5", value: "Sat" },
   //     { key: "6", value: "Sun" },
   //   ];
-
-
-
+    
+  //   console.log(dayCode[0]?.value, "day");
+    
   //   // Iterate over the input days
   //   for (let i = 0; i < toArray.length; i++) {
-
-  //     console.log(dayCode[i]?.value,i, "day");
-  //     if (dayCode[i].value === toArray[i]) {
-
-  //       if (toArray[i] === toArray[i + 1]) {
-
-  //         return `${dayCode[0].value}-${dayCode[i].value}`;                 
-  //       } 
-  //       else {      
-  //         return toArray;     
-  //       }
-
+  //     // Check if the current day matches the expected day from dayCode
+  //     if (dayCode[i].value !== toArray[i]) {
+  //       // If the current day doesn't match, return the inputString as it is
+  //       return `${dayCode[0].value}-${dayCode[toArray.length - 1].value}`;
   //     }
+  //     else {
 
+  //       return inputString;
+  //     }
   //   }
+  
+  //   // If all days are consecutive and match the expected days, return the range
+  // };
+  // const formatDays = (inputString) => {
+  //   const toArray = inputString.split(",");
+  //   const dayCode = ["Mon", "Tue", "Wed", "Thur", "Fri", "Sat", "Sun"];
+
+  //   for (let i = 0; i < toArray.length; i++) {
+  //     if (dayCode.indexOf(toArray[i]) !== i) {
+  //       return `${dayCode[0]}-${dayCode[toArray.length - 1]}`;
+  //     }
+  //   }
+  //   return inputString;
+  // };
+  // const formatDays = (inputString) => {
+  //   const toArray = inputString.split(",");
+  //   const dayCode = ["Mon", "Tue", "Wed", "Thur", "Fri", "Sat", "Sun"];
+  //   const startDayIndex = dayCode.indexOf(toArray[0]);
+  //   let isConsecutive = true;
+  
+  //   for (let i = 1; i < toArray.length; i++) {
+  //     const currentDayIndex = dayCode.indexOf(toArray[i]);
+  //     if (currentDayIndex !== (startDayIndex + i) % 7) {
+  //       isConsecutive = false;
+  //       break;
+  //     }
+  //   }
+  
+  //   return isConsecutive ? `${toArray[0]}-${toArray[toArray.length - 1]}` : inputString;
   // };
   const formatDays = (inputString) => {
-
     const toArray = inputString.split(",");
-    console.log(toArray, "arr")
-    const dayCode = [
-      { key: "0", value: "Mon" },
-      { key: "1", value: "Tue" },
-      { key: "2", value: "Wed" },
-      { key: "3", value: "Thur" },
-      { key: "4", value: "Fri" },
-      { key: "5", value: "Sat" },
-      { key: "6", value: "Sun" },
-    ]
-    console.log(dayCode[0]?.value, "day");
-    for (let i = 0; i < inputString.length; i++) 
-    {
-      if (dayCode[i].value === toArray[i]) 
-      {
-        if (dayCode[i].value !== toArray[i + 1]) 
-        {
-          return `${dayCode[0]} - ${dayCode[inputString.length - 1]}`;
-
-        }
-
-      }
-
-      else{
-  return inputString
-  }
-    }
-
+    const dayCode = ["Mon", "Tue", "Wed", "Thur", "Fri", "Sat", "Sun"];
+    const startDayIndex = dayCode.indexOf(toArray[0]);
+    let isConsecutive = true;
   
-  }
-
-
-
-
-
+    // Check if the days form a consecutive range
+    for (let i = 1; i < toArray.length; i++) {
+      const currentDayIndex = dayCode.indexOf(toArray[i]);
+      if (currentDayIndex !== (startDayIndex + i) % 7) {
+        isConsecutive = false;
+        break;
+      }
+    }
+  
+    // If days are consecutive, return the range
+    if (isConsecutive) {
+      return `${toArray[0]}-${toArray[toArray.length - 1]}`;
+    }
+  
+    // If all days of the week are present, return them as a comma-separated list
+    if (toArray.length === 7) {
+      return "Mon-Sun";
+    }
+  
+    // Otherwise, return the input string as it is
+    return inputString;
+  };
 useEffect(() => {
   axios.get(`${tempURL}/api/account`)
     .then(response => {
@@ -245,7 +214,8 @@ useEffect(() => {
     axios.get(`${tempURL}/api/v1/centers?organizationId.equals=${orgId}`, { headers: { "ngrok-skip-browser-warning": "true" } })
       .then(response => {
         setCenterData(response.data);
-        console.log(response.data); // Ensure you're receiving the correct data
+        console.log(response.data); 
+        setSpinner(false);
       })
       .catch(err => console.log(err));
   }
@@ -261,11 +231,23 @@ return (
     <div style={{ backgroundColor: "gainsboro" }}>
       <div className="mt-2 fw-bold">Center</div>
       <hr className="mt-1 ms-2" />
-      <Card className="bg-white p-3 rounded-3">
+      {spinner ? <Card style={{ width: '18rem' }}>
+        {/* <Card.Img variant="top" src="holder.js/100px180" /> */}
+        <Card.Body>
+          <Placeholder as={Card.Title} animation="glow">
+            <Placeholder xs={12} />
+          </Placeholder>
+          <Placeholder as={Card.Text} animation="glow">
+            <Placeholder xs={12} /> <Placeholder xs={4} /> <Placeholder xs={4} />{' '}
+            <Placeholder xs={6} /> <Placeholder xs={8} />
+          </Placeholder>
+          {/* <Placeholder.Button variant="primary" xs={6} /> */}
+        </Card.Body>
+      </Card> :<Card className="bg-white p-3 rounded-3">
         <div className="row">
           {centerData.map((center) => (
             <div key={center.id} style={{ width: '15rem', height: "227px" }} className="m-xl-3 mx-auto my-2 col-sm-6 col-md-6 col-lg-3 col-xl-3 border rounded-2 px-0 " onClick={() => handleReservation(center.id)}>
-              {center.photos[0]?.url ? <Card.Img src={center.photos[0].url} className="px-0 mb-0 card-img" /> : <Card.Title className="bg-gainsboro card-img text-black mb-0 d-flex align-items-end fs-6 "><span className="ms-3 mb-2">{center.title}</span></Card.Title>}
+              {center.photos[0]?.url ? <Card.Img src={center.photos[0].url} className="px-0 mb-0 card-img" /> : <Card.Title className="bg-gainsboro card-img text-black mb-0 d-flex align-items-end fs-6 "><span className="ms-3 mb-2">{center?.title}</span></Card.Title>}
               <Card.Body className="p-2 fs-7 hover-border1 ">
                 <div>
                   <div className="mb-2">
@@ -278,8 +260,8 @@ return (
                 <div className="my-3">
                   <div>
                     <div className="text-secondary fw-bold">Business hours</div>
-
-                    {console.log(center?.centerHours[0]?.weekday, "df")}
+                    
+                    {console.log(center?.centerHours[0]?.weekday,center.title, "df")}
                     {formatDays(center?.centerHours[0]?.weekday)}
 
                   </div>
@@ -289,7 +271,7 @@ return (
             </div>
           ))}
         </div>
-      </Card>
+      </Card>}
     </div>
   </>
 );
