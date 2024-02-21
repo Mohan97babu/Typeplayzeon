@@ -2,7 +2,7 @@ import { Col, Row, Form, Button, Offcanvas, Table, Spinner } from "react-bootstr
 import { Icon } from "@iconify/react";
 import React, { useState, ChangeEvent, useEffect } from "react";
 import Select from 'react-select';
-import {  BookingType } from "../../utils/Data";
+import { BookingType } from "../../utils/Data";
 import { Time, Days, TableAddPlayers, TablePricing } from "../../utils/Data";
 import Moment from "react-moment";
 import moment from "moment";
@@ -11,7 +11,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Calendar, momentLocalizer, Views } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import {  eachDayOfInterval, getDay } from 'date-fns';
+import { eachDayOfInterval, getDay } from 'date-fns';
 import "../../assets/Css/App.css";
 import { Formik } from "formik";
 import * as yup from "yup";
@@ -35,7 +35,7 @@ interface bookingDetails {
     notes: string;
     facilityCheck: string;
     pricingRuleCheck: string;
-    selectedDays:any[];
+    selectedDays: any[];
 }
 interface calendarDetails {
     facilityType: string;
@@ -80,19 +80,24 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const [disable, setDisable] = useState(false);
     const [sportsId, setSportsId] = useState(0);
     const [spinner, setSpinner] = useState(true);
+    const [nameDisClose,setNameDisclose] = useState(false)
     const [time, setTime] = useState({
         start: "",
         end: "",
     })
     const [eventData, setEventData] = useState([]);
     const [addPlayers, setAddPlayers] = useState({
-        firstName: "" ,
-        lastName: "" ,
+        firstName: "" || "Name Not Disclosed",
+        lastName: "" || "Name Not Disclosed",
         nameDiscloseCheck: false,
         sameAsPrimary: false,
         addFacilityCheck: "",
         addPricingCheck: "",
         cost: "",
+    })
+    const [editAddPlayer,setEditAddPlayer] = useState({
+        check:false,
+        index :"",
     })
     const [addPlayersData, setAddPlayersData] = useState<any>([]);
     // const [facilityType,setFacilityType] = useState([]);
@@ -102,7 +107,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         date: new Date(),
         sportsId: ""
     })
-    // console.log(calendarDetails.date, "457")
+    console.log(addPlayers.nameDiscloseCheck, "457")
 
     const [apiResponse, setApiResponse] = useState<apiResponse>({
         facilityType: [],
@@ -123,15 +128,18 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
 
 
     const handleAddPlayerOpen = () => { setAddShow(true) }
-    const handleAddPlayerClose = () => { setAddShow(false);  clearState() }
+    const handleAddPlayerClose = () => { setAddShow(false); clearState() }
     const handleClose = () => setShow(false);
     const handleShow = () => setShow(true);
     const handleOpenBookPreview = () => setBookShow(true);
-    const handleCloseBookPreview = () => {setBookShow(false);};
+    const handleCloseBookPreview = () => { setBookShow(false); };
 
     const tempURL = process.env.REACT_APP_BASEURLTEMP;
     const orgURL = process.env.REACT_APP_BASEURLORG;
     const [errors, setErrors] = useState({});
+    const handleToggleDisable = () => {
+        setDisable(prevDisable => !prevDisable);
+    };
     const handleSubmit = async (event: any, values: any) => {
         event.preventDefault();
         console.log(bookingDetails, values, "details");
@@ -152,7 +160,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         //     });
         //     setErrors(errorsObj);
         // }
-        setDisable(true);
+        //  setDisable(true);
+        handleToggleDisable();
         // setSubmitting(false);
     }
     // console.log(bookingDetails,"out")
@@ -171,12 +180,17 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     }
     const handleRadioAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
         setAddPlayers({ ...addPlayers, [e.target.name]: e.target.value });
-        clearState();
-        
+        //      clearState();
+
     }
-    const clearState = () =>
-    {
-        setAddPlayers({firstName:"",lastName:"",nameDiscloseCheck:false,sameAsPrimary:false,addFacilityCheck:"",addPricingCheck:"",cost:""});
+    const clearState = () => {
+        setAddPlayers({ firstName: "", lastName: "", nameDiscloseCheck: false, sameAsPrimary: false, addFacilityCheck: "", addPricingCheck: "", cost: "" });
+    }
+    const deleteRow = (index) => {
+        const dataRow = [...addPlayersData];
+        dataRow.splice(index, 1);
+        setAddPlayersData(dataRow);
+
     }
     const handleBookingCost = (pricing: any) => {
         console.log(pricing?.pricingRule?.cost, "cost");
@@ -184,9 +198,16 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         setAddPlayers({ ...addPlayers, cost: pricing?.pricingRule?.cost })
     }
     const handleAddPlayer = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-       
+        console.log(e.target.checked, "datacheck");
+        if (e.target.checked) {
+            setAddPlayers({ ...addPlayers, [e.target.name]: e.target.checked });
+        }
+        else {
+
+            console.log(e.target.value, "vaal");
             setAddPlayers({ ...addPlayers, [e.target.name]: e.target.value });
-        
+        }
+
     }
     //  console.log(addPlayers, "addplayers")
     const listFacilities = async (sportsId: any) => {
@@ -326,17 +347,17 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     //     }
     // };
     const daysOfWeek = Days;
- 
+
 
     // const handleCheckboxChange = (dayAbbreviation) => {
     //     const updatedSelectedDays = [...bookingDetails.selectedDays]; // Create a copy of the current selectedDays array
-    
+
     //     // Find the corresponding full day name for the abbreviation
     //     const fullDayName = dayOptions.find(option => option.label === dayAbbreviation)?.value;
-    
+
     //     if (fullDayName) {
     //         const dayIndex = updatedSelectedDays.indexOf(fullDayName); // Check if the full day name is already in the array
-    
+
     //         if (dayIndex === -1) {
     //             // If the day is not in the array, add it
     //             updatedSelectedDays.push(fullDayName);
@@ -344,7 +365,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     //             // If the day is already in the array, remove it
     //             updatedSelectedDays.splice(dayIndex, 1);
     //         }
-    
+
     //         // Update the state with the new array
     //         setBookingDetails(prevState => ({
     //             ...prevState,
@@ -354,13 +375,13 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     // };
     const handleCheckboxChange = (dayOfWeek) => {
         const updatedSelectedDays = [...bookingDetails.selectedDays]; // Create a copy of the current selectedDays array
-    
+
         // Find the corresponding full day name for the abbreviation
         const fullDayName = dayOptions.find(option => option.label === dayOfWeek)?.value;
-    
+
         if (fullDayName) {
             const dayIndex = updatedSelectedDays.indexOf(fullDayName); // Check if the full day name is already in the array
-    
+
             if (dayIndex === -1) {
                 // If the day is not in the array, add it
                 updatedSelectedDays.push(fullDayName);
@@ -368,7 +389,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 // If the day is already in the array, remove it
                 updatedSelectedDays.splice(dayIndex, 1);
             }
-    
+
             // Update the state with the new array
             setBookingDetails(prevState => ({
                 ...prevState,
@@ -376,7 +397,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             }));
         }
     };
-   
+
     const dayOptions = [
         { value: 'Sunday', label: 'Sun' },
         { value: 'Monday', label: 'Mon' },
@@ -385,12 +406,12 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         { value: 'Thursday', label: 'Thu' },
         { value: 'Friday', label: 'Fri' },
         { value: 'Saturday', label: 'Sat' },
-      ];
- 
+    ];
+
     // const renderDaysOfWeek = (startDate, endDate) => {
     //     const daysBetween = eachDayOfInterval({ start: startDate, end: endDate });
     //     const renderedDays = [];
-        
+
     //     // Iterate over each day in the date range
     //     daysBetween.forEach(day => {
     //         const dayIndex = getDay(day);
@@ -399,7 +420,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     //         const isSelected = bookingDetails.selectedDays.includes(dayOfWeek);
     //         console.log("Day of week:", dayOfWeek);
     //         console.log("Abbreviation:", dayIndex);
-    
+
     //         // Render the checkbox for the day
     //         renderedDays.push(
     //             <div key={dayOfWeek} className="form-check-inline">
@@ -412,27 +433,28 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     //             </div>
     //         );
     //     });
-    
+
     //     return renderedDays;
     // };
+    // console.log(addPlayersData, "data")
     const renderDaysOfWeek = (startDate, endDate) => {
         const daysBetween = eachDayOfInterval({ start: startDate, end: endDate });
         const renderedDays = [];
         const renderedDayNames = []; // Array to keep track of already rendered day names
-    
+
         // Iterate over each day in the date range
         daysBetween.forEach(day => {
             const dayIndex = getDay(day);
             const dayOfWeek = daysOfWeek[dayIndex]; // Get the day of the week (e.g., "Monday", "Tuesday")
             const dayAbbreviation = dayOptions.find(option => option.value === dayOfWeek)?.label; // Find the corresponding abbreviation (e.g., "Mon", "Tue")
-    
+
             console.log("Day of week:", dayOfWeek);
             console.log("Abbreviation:", dayAbbreviation);
-    
+
             if (!renderedDayNames.includes(dayOfWeek)) {
                 // Check if the day has already been rendered
                 renderedDayNames.push(dayOfWeek); // Add the day to the list of rendered days
-    
+
                 // Determine if the day is selected
                 const isChecked = bookingDetails.selectedDays.some(fullDayName => {
                     return fullDayName.includes(dayOfWeek);
@@ -450,11 +472,11 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 );
             }
         });
-    
+
         return renderedDays;
     };
-   
-    console.log(bookingDetails.selectedDays,"dayarr")
+
+    console.log(bookingDetails.selectedDays, "dayarr")
     const handleSearchCalendar = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         // axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${currentMoment.format()}&end.lessThanOrEqual=${nextDayMoment.format()}&Id.in=${facilityItemIds}`)
@@ -477,11 +499,19 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const handleCheckDays = () => {
 
     }
-    // console.log(bookingDetails.startDate?.getDay(), bookingDetails.endDate, "startend")
+ //   console.log(bookingDetails.startDate?.getDay(), bookingDetails.endDate, "startend")
     const handlePlayerSubmit = () => {
-        setAddPlayersData([...addPlayersData, addPlayers]);
+        if(!editAddPlayer.check){
+
+            setAddPlayersData([...addPlayersData, addPlayers]);
+        }
+        else{
+            const data=[...addPlayersData];
+            data[editAddPlayer.index] = addPlayers;
+            setAddPlayersData(data);
+        }
     }
-    //  console.log(addPlayersData, "addpalyers")
+    //   console.log(addPlayersData, "addpalyers")
 
     let facilityItemIds = [];
     //  console.log(facilityItemIds,"ids")
@@ -522,11 +552,47 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             console.error('Error fetching event data:', error);
         }
     };
-    console.log(eventData, "evtdata");
+    //console.log(eventData, "evtdata");
     const events = [
         { id: 1, title: 'Event 1', start: new Date(), end: new Date() },
         { id: 2, title: 'Event 2', start: new Date(), end: new Date() }
     ];
+    // const startDate1 =bookingDetails.startDate?.getUTCFullYear();
+    // const endDate1 = bookingDetails.endDate ?.toISOString();
+    // console.log(startDate1,"init",endDate1);
+    // const startDateTimeUTC = new Date(`${startDate1}T${bookingDetails.startTime}:00Z`);
+    // const endDateTimeUTC = new Date(`${endDate1}T${bookingDetails.endTime}:00Z`);
+    // console.log(startDateTimeUTC,"to",endDateTimeUTC)
+
+    const startTimeMoment = moment(bookingDetails.startTime, 'hh:mm A');
+const startTime24HourFormat = startTimeMoment.format('HH:mm:ss');
+
+// Parse the end time to 24-hour format using Moment.js
+const endTimeMoment = moment(bookingDetails.endTime, 'hh:mm A');
+const endTime24HourFormat = endTimeMoment.format('HH:mm:ss');
+
+// Format the start and end dates
+const startDate = moment(bookingDetails.startDate).format('YYYY-MM-DD');
+const endDate = moment(bookingDetails.endDate).format('YYYY-MM-DD');
+
+// Combine start date and time in UTC format
+const startDateTime = moment.utc(`${startDate}T${startTime24HourFormat}Z`).add(7, 'hours').format();
+
+// Combine end date and time in UTC format
+const endDateTime = moment.utc(`${endDate}T${endTime24HourFormat}Z`).add(7, 'hours').format();
+
+console.log('Start Date Time:', startDateTime);
+console.log('End Date Time:', endDateTime);
+
+    const handleCheckAvialability = async () => {
+        await axios.get(`${tempURL}/api/v1/facility/getAvailability?centerId.equals=${centerId}&sportId.equals=${sportsId}&startTime=${startDateTime}&endTime=${endDateTime}&isMultiple=${bookingDetails.bookingOccurence === "Single Booking"? false : true}&days=${bookingDetails.bookingOccurence === "Single Booking"?"":bookingDetails.selectedDays}`)
+        .then((response) => console.log(response))
+        .catch((err) => console.log(err))
+    }
+    const handleEdit =(index) =>{
+        setEditAddPlayer({check:true,index:index});
+        setAddShow(true);
+    }
 
     return (
         <div className="bg-white mt-2 rounded-2 ">
@@ -747,13 +813,13 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 </div>
                             ))} */}
                             {bookingDetails.startDate && bookingDetails.endDate && (
-                                <div>                                  
+                                <div>
                                     {renderDaysOfWeek(bookingDetails.startDate, bookingDetails.endDate)}
                                 </div>
                             )}
 
                             <div className="mt-5">
-                                <Button variant="danger" className="">Check Availability</Button>
+                                <Button variant="danger" className="" onClick={handleCheckAvialability}>Check Availability</Button>
                             </div>
                             <div className="fw-medium">Available Facility</div>
                             <Row >
@@ -770,7 +836,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                         facility: "",
                                     }}
                                 >
-                                    {({ handleChange, values, errors }) => (
+                                    {({ handleSubmit,handleChange, values, errors, isValid }) => (
 
                                         <Form noValidate onSubmit={(e) => handleSubmit(e, values)}>
                                             {/* {console.log(values,"values")} */}
@@ -860,11 +926,14 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                             )
                                                         })}
                                                     </div>
-                                                    <span className="text-danger" >{errors.pricingRule}</span>
+                                                    <span className="text-danger">{errors.pricingRule}</span>
                                                 </Col>
                                             </Row>
-                                            {!disable ? <div className="text-end mt-3"><Button variant="success" type="submit" >save</Button></div>
-                                                : <div className="text-end mt-3"><Button variant="warning" onClick={() => setDisable(false)} >Edit</Button></div>}
+                                            {disable ? (
+                                                <Button variant="warning" onClick={handleToggleDisable}>Edit</Button>
+                                            ) : (
+                                                <Button variant="success" type="submit" >Save</Button>
+                                            )}
                                         </Form>
 
                                     )}
@@ -884,7 +953,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 <tbody>
 
                                     {addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; lastName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined) => {
-                                        console.log(data, "datat")
+                                       
                                         return (
                                             <tr key={index}>
                                                 <td>{index + 1}</td>
@@ -893,7 +962,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                 <td>{data.addFacilityCheck}</td>
                                                 <td>{data.addPricingCheck}</td>
                                                 <td>${data.cost}</td>
-                                                <td><div className="bg-warning w-50 px-2 mx-auto rounded-2 mt-1"><Icon icon="uil:edit" /></div><div className="bg-danger w-50 px-2 mx-auto  mt-1 rounded-2"><Icon icon="mi:delete" /></div></td>
+                                                <td><div className="bg-warning w-50 px-2 mx-auto rounded-2 mt-1"onClick={() =>handleEdit(index)}><Icon icon="uil:edit" /></div><div className="bg-danger w-50 px-2 mx-auto  mt-1 rounded-2" onClick={() => deleteRow(index)}><Icon icon="mi:delete" /></div></td>
                                             </tr>
                                         )
                                     })
@@ -914,17 +983,17 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                         className="mt-2 "
                                         checked={addPlayers.nameDiscloseCheck}
                                         value={addPlayers.nameDiscloseCheck}
-                                       // onChange={(e) => handleAddPlayer(e)}
-                                       onClick={() =>setAddPlayers({...addPlayers,nameDiscloseCheck:true})}
+                                        onChange={(e) => handleAddPlayer(e)}
+                                    //  onClick={() =>setAddPlayers({...addPlayers,nameDiscloseCheck:true})}
                                     />
                                     <Row className="mt-2">
                                         <Col>
                                             <Form.Label className="fw-medium">firstName</Form.Label>
-                                            <Form.Control type="text" placeholder="Enter firstName" value={!addPlayers.nameDiscloseCheck ?addPlayers.firstName :"Name Not Disclosed" } name="firstName" onChange={(e) => handleAddPlayer(e)} disabled={addPlayers.nameDiscloseCheck === true} />
+                                            <Form.Control type="text" placeholder="Enter firstName" value={editAddPlayer.check === false ? !nameDisClose ? addPlayers.firstName : "Name Not Disclosed":addPlayersData[editAddPlayer.index].firstName} name="firstName" onChange={(e) => handleAddPlayer(e)} disabled={addPlayers.nameDiscloseCheck} />
                                         </Col>
                                         <Col>
                                             <Form.Label className="fw-medium">lastName</Form.Label>
-                                            <Form.Control type="text" placeholder="Enter lastName" value={!addPlayers.nameDiscloseCheck ?addPlayers.lastName :"Name Not Disclosed"} name="lastName" onChange={(e) => handleAddPlayer(e)} disabled={addPlayers.nameDiscloseCheck === true} />
+                                            <Form.Control type="text" placeholder="Enter lastName" value={editAddPlayer.check === false ? !nameDisClose ? addPlayers.lastName : "Name Not Disclosed":addPlayersData[editAddPlayer.index].lastName} name="lastName" onChange={(e) => handleAddPlayer(e)} disabled={addPlayers.nameDiscloseCheck} />
                                         </Col>
                                     </Row>
                                     <Form.Check
@@ -934,8 +1003,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                         type={"checkbox"}
                                         className="mt-2"
                                         value={addPlayers.sameAsPrimary}
-                                        onChange={(e) => handleAddPlayer(e)}
+                                        // onClick={(e) => handleAddPlayer(e)}
                                         checked={addPlayers.sameAsPrimary === true}
+                                        onChange={(e) => handleAddPlayer(e)}
 
                                     />
                                     <Row className="mt-3 d-flex justify-content-between ">
@@ -947,7 +1017,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                     return (
                                                         <div key={index}>
                                                             {type.map((facility: any) => {
-
                                                                 return (
                                                                     <Form.Check
                                                                         type={"radio"}
@@ -1001,7 +1070,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                     </div>
                                     <div className="text-center mt-2">
 
-                                        <Button variant="danger" className="w-75"onClick={handleAddPlayerClose}>Close</Button>
+                                        <Button variant="danger" className="w-75" onClick={handleAddPlayerClose}>Close</Button>
                                     </div>
                                 </Offcanvas.Body>
                             </Offcanvas>
