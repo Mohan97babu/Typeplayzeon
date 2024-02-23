@@ -1,4 +1,4 @@
-import { Col, Row, Form, Button, Offcanvas, Table, Spinner } from "react-bootstrap";
+import { Col, Row, Form, Button, Offcanvas, Table, Spinner ,Badge } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import React, { useState, ChangeEvent, useEffect } from "react";
 import Select from 'react-select';
@@ -48,6 +48,7 @@ interface apiResponse {
     facilities: any;
     pricingrule: [];
     calendarDetails: [];
+    checkFacility:[];
 }
 const CustomDayView = ({ date, events }) => {
     return (
@@ -74,6 +75,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const [show, setShow] = useState(false);
     const [addShow, setAddShow] = useState(false)
     const [bookShow, setBookShow] = useState(false);
+    const [appearForm,setAppearForm] = useState(false);
     const [startTime, setStartTime] = useState(null);
     const [endTime, setEndTime] = useState(null);
     const [perCost, setPerCost] = useState("");
@@ -114,6 +116,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         facilities: {},
         pricingrule: [],
         calendarDetails: [],
+        checkFacility :[],
+        
     })
     const centerId = localStorage.getItem("centerId");
     const schema = yup.object().shape({
@@ -140,10 +144,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const handleToggleDisable = () => {
         setDisable(prevDisable => !prevDisable);
     };
-    const handleSubmit = async (event: any, values: any) => {
-        event.preventDefault();
-        console.log(bookingDetails, values, "details");
-        setBookingDetails({ ...bookingDetails, firstName: values.firstName, lastName: values.lastName, emailAddress: values.emailAddress, phoneNumber: values.phoneNumber, pricingRuleCheck: values.pricingRule, facilityCheck: values.facility })
+    const handleFormikSubmit = (event: any) => {
+        console.log(bookingDetails, event, "details");
+         setBookingDetails({ ...bookingDetails, firstName: event.firstName, lastName: event.lastName, emailAddress: event.emailAddress, phoneNumber: event.phoneNumber, pricingRuleCheck: event.pricingRule, facilityCheck: event.facility })
         //     event.preventDefault(); // Prevent default form submission
 
         // try {
@@ -193,13 +196,16 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
 
     }
     const handleBookingCost = (pricing: any) => {
-        console.log(pricing?.pricingRule?.cost, "cost");
+        console.log(pricing?.pricingRule, "cost");
         setPerCost(pricing?.pricingRule?.cost);
-        setAddPlayers({ ...addPlayers, cost: pricing?.pricingRule?.cost })
+        
+            setAddPlayers({ ...addPlayers, cost: pricing?.pricingRule?.cost });
+        
     }
+   
     const handleAddPlayer = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         console.log(e.target.checked, "datacheck");
-        if (e.target.checked) {
+        if (e.target.name === "nameDiscloseCheck" || e.target.name === "sameAsPrimary") {
             setAddPlayers({ ...addPlayers, [e.target.name]: e.target.checked });
         }
         else {
@@ -586,7 +592,7 @@ console.log('End Date Time:', endDateTime);
 
     const handleCheckAvialability = async () => {
         await axios.get(`${tempURL}/api/v1/facility/getAvailability?centerId.equals=${centerId}&sportId.equals=${sportsId}&startTime=${startDateTime}&endTime=${endDateTime}&isMultiple=${bookingDetails.bookingOccurence === "Single Booking"? false : true}&days=${bookingDetails.bookingOccurence === "Single Booking"?"":bookingDetails.selectedDays}`)
-        .then((response) => console.log(response))
+        .then((response) =>{ setApiResponse({...apiResponse,checkFacility:response.data}); console.log(response.data); setAppearForm(true)})
         .catch((err) => console.log(err))
     }
     const handleEdit =(index) =>{
@@ -821,12 +827,22 @@ console.log('End Date Time:', endDateTime);
                             <div className="mt-5">
                                 <Button variant="danger" className="" onClick={handleCheckAvialability}>Check Availability</Button>
                             </div>
-                            <div className="fw-medium">Available Facility</div>
+                          { appearForm && <>
+                          
+                         <div className="fw-medium">Available Facility</div>
+                             { apiResponse?.checkFacility?.map((facilities) =>
+                              {                                
+                                return (
+                                    <Badge bg="success" className="mt-2 me-2 ">{facilities?.title}</Badge>
+                                )
+                              })}
+                              {apiResponse?.checkFacility?.message ? <p>{apiResponse?.checkFacility?.message}</p> : null}
                             <Row >
+                               
                                 <div className="my-2 fw-medium">Player Details</div>
                                 <Formik
                                     validationSchema={schema}
-                                    onSubmit={handleSubmit}
+                                    onSubmit={handleFormikSubmit}
                                     initialValues={{
                                         firstName: "",
                                         lastName: "",
@@ -836,9 +852,8 @@ console.log('End Date Time:', endDateTime);
                                         facility: "",
                                     }}
                                 >
-                                    {({ handleSubmit,handleChange, values, errors, isValid }) => (
-
-                                        <Form noValidate onSubmit={(e) => handleSubmit(e, values)}>
+                                    {({ handleSubmit, handleChange, values, errors, isValid }) => (
+                                        <Form onSubmit={handleSubmit}>
                                             {/* {console.log(values,"values")} */}
                                             {/* {console.log(bookingDetails,"books")} */}
                                             {/* { console.log(facility,"facility")}  */}
@@ -930,7 +945,7 @@ console.log('End Date Time:', endDateTime);
                                                 </Col>
                                             </Row>
                                             {disable ? (
-                                                <Button variant="warning" onClick={handleToggleDisable}>Edit</Button>
+                                                <Button variant="warning" onClick={handleToggleDisable} type="button">Edit</Button>
                                             ) : (
                                                 <Button variant="success" type="submit" >Save</Button>
                                             )}
@@ -1074,6 +1089,7 @@ console.log('End Date Time:', endDateTime);
                                     </div>
                                 </Offcanvas.Body>
                             </Offcanvas>
+                            </>}
                             <Row className="mt-4 mx-1">
                                 <Form.Label className="px-0 fw-medium">Notes</Form.Label>
                                 <Form.Control
@@ -1131,9 +1147,12 @@ console.log('End Date Time:', endDateTime);
                                         <td>{bookingDetails.pricingRuleCheck}</td>
                                         <td>${perCost}</td>
                                     </tr>
-                                    {addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined) => {
-                                        return (
+                                    {addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined | number) => {
+                                        let serialnumber:any = index + 2 ;
+                                        console.log(data,"data")
+                                       return (
                                             <tr key={index}>
+                                                <td>{serialnumber}</td>
                                                 <td>{data.firstName}</td>
                                                 <td>{data.addFacilityCheck}</td>
                                                 <td>{data.addPricingCheck}</td>
@@ -1229,9 +1248,13 @@ console.log('End Date Time:', endDateTime);
                                                     <td>{bookingDetails.pricingRuleCheck}</td>
                                                     <td>${perCost}</td>
                                                 </tr>
-                                                {addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined) => {
+                                                {addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined | number) => {
+                                                   
+                                                  //  console.log(serialnumber,index,data.cost,"index78");
+                                                    
                                                     return (
                                                         <tr key={index}>
+                                                            {/* <td>{serialnumber}</td> */}
                                                             <td>{data.firstName}</td>
                                                             <td>{data.addFacilityCheck}</td>
                                                             <td>{data.addPricingCheck}</td>

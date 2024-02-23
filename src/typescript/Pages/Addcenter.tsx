@@ -179,7 +179,7 @@ const AddCenter: React.FC<AddCenterProps> = ({ setOrgDetails }) => {
     const startDayIndex = dayCode.indexOf(toArray[0]);
     let isConsecutive = true;
   
-    // Check if the days form a consecutive range
+   
     for (let i = 1; i < toArray.length; i++) {
       const currentDayIndex = dayCode.indexOf(toArray[i]);
       if (currentDayIndex !== (startDayIndex + i) % 7) {
@@ -188,17 +188,17 @@ const AddCenter: React.FC<AddCenterProps> = ({ setOrgDetails }) => {
       }
     }
   
-    // If days are consecutive, return the range
+    
     if (isConsecutive) {
       return `${toArray[0]}-${toArray[toArray.length - 1]}`;
     }
   
-    // If all days of the week are present, return them as a comma-separated list
+   
     if (toArray.length === 7) {
       return "Mon-Sun";
     }
   
-    // Otherwise, return the input string as it is
+    
     return inputString;
   };
 useEffect(() => {
@@ -248,21 +248,21 @@ return (
           {centerData.map((center) => (
             <div key={center.id} style={{ width: '15rem', height: "227px" }} className="m-xl-3 mx-auto my-2 col-sm-6 col-md-6 col-lg-3 col-xl-3 border rounded-2 px-0 " onClick={() => handleReservation(center.id)}>
               {center.photos[0]?.url ? <Card.Img src={center.photos[0].url} className="px-0 mb-0 card-img" /> : <Card.Title className="bg-gainsboro card-img text-black mb-0 d-flex align-items-end fs-6 "><span className="ms-3 mb-2">{center?.title}</span></Card.Title>}
-              <Card.Body className="p-2 fs-7 hover-border1 ">
+              <Card.Body className="p-3  fs-7 hover-border1  ">
                 <div>
-                  <div className="mb-2">
+                  <div className="mb-2 mt-1">
                     {center.streetAddress},<span className="text-truncate">{center.suite}</span>
                   </div>
                   <div>
                     {center.city},{center.stateProvince}
                   </div>
                 </div>
-                <div className="my-3">
+                <div className="my-3 ">
                   <div>
                     <div className="text-secondary fw-bold">Business hours</div>
                     
-                    {console.log(center?.centerHours[0]?.weekday,center.title, "df")}
-                    {formatDays(center?.centerHours[0]?.weekday)}
+                   
+                    {formatDays(center?.centerHours[0]?.weekday)}:<span> {center?.centerHours[0]?.startTime} To</span> {center?.centerHours[0]?.endTime}
 
                   </div>
                 </div>

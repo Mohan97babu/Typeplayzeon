@@ -75,7 +75,7 @@
 }
 .hover-border1:hover{
   border :1px solid red;
-}
+  }
 .h-35{
   height: 110px;
   overflow:auto;
