@@ -29,7 +29,7 @@ const NavBar: React.FC<{setIsSignedIn :React.Dispatch<React.SetStateAction<boole
                         <Dropdown.Menu>
 
                             <Dropdown.Item href="#/action-2">Organisation Info</Dropdown.Item>
-                            <Link to={"/"}><Dropdown.Item href="#/action-3" onClick={handleSignOut}>Log out</Dropdown.Item></Link>
+                            <Link to={"/"} className="text-decoration-none"><Dropdown.Item href="#/action-3" onClick={handleSignOut}>Log out</Dropdown.Item></Link>
                         </Dropdown.Menu>
                     </Dropdown>
                   
