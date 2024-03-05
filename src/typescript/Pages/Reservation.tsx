@@ -1,6 +1,6 @@
 import { Col, Row, Form, Button, Offcanvas, Table, Spinner, Badge } from "react-bootstrap";
 import { Icon } from "@iconify/react";
-import React, { useState, ChangeEvent, useEffect } from "react";
+import React, { useState, ChangeEvent, useEffect ,useRef} from "react";
 import Select from 'react-select';
 import { BookingType } from "../../utils/Data";
 import { Time, Days, TableAddPlayers, TablePricing } from "../../utils/Data";
@@ -36,6 +36,7 @@ interface bookingDetails {
     facilityCheck: string;
     pricingRuleCheck: string;
     selectedDays: any[];
+    costPrimary:"",
 }
 interface calendarDetails {
     facilityType: string;
@@ -83,6 +84,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const [sportsId, setSportsId] = useState(0);
     const [spinner, setSpinner] = useState(true);
     const [nameDisClose, setNameDisclose] = useState(false)
+    const [pricingId, setPricingId] = useState(null);
+    const [buttonText, setButtonText] = useState('Save')
+    const [totalPrice,setTotalPrice] = useState("")
+    const pricingRuleIdsRef = useRef<string[]>([]);
     const [time, setTime] = useState({
         start: "",
         end: "",
@@ -136,7 +141,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         pricingRule: yup.string().required("pricingRule is Required Field "),
         sameAsPrimary: yup.boolean(),
         nameDisClose: yup.boolean(),
-        cost:yup.string(),
+        cost: yup.string(),
     })
     // const Errors = localStorage.getItem("error");
     console.log(localStorage.getItem("error"), "error")
@@ -151,10 +156,15 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const orgURL = process.env.REACT_APP_BASEURLORG;
     const [errorsMessage, setErrorsMessage] = useState("");
     const handleToggleDisable = () => {
-        setDisable(prevDisable => !prevDisable);
+        console.log("in458", disable)
+        setDisable(false);
     };
+    console.log(disable, "in4587");
+
     const handleFormikSubmit = (event: any) => {
-        console.log(bookingDetails, event, "details");
+        console.log(bookingDetails, event,pricingId, "details");
+
+
         setBookingDetails({ ...bookingDetails, firstName: event.firstName, lastName: event.lastName, emailAddress: event.emailAddress, phoneNumber: event.phoneNumber, pricingRuleCheck: event.pricingRule, facilityCheck: event.facility })
         //     event.preventDefault(); // Prevent default form submission
 
@@ -173,8 +183,15 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         //     setErrors(errorsObj);
         // }
         //  setDisable(true);
-        handleToggleDisable();
+        if (buttonText === 'Save') {
+            setButtonText('Edit');
+        }
+        else {
+            setButtonText('Save');
+        }
         // setSubmitting(false);
+        pricingRuleIdsRef.current.push(pricingId)
+        handleCostPricing();
     }
     // console.log(bookingDetails,"out")
     console.log(disable, "disable");
@@ -206,10 +223,25 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     }
     const handleBookingCost = (pricing: any) => {
         console.log(pricing?.pricingRule, "cost");
-        setAddPlayers({ ...addPlayers, cost: pricing?.pricingRule?.cost });    
+       // setAddPlayers({ ...addPlayers, cost: pricing?.pricingRule?.cost });
+       setBookingDetails({...bookingDetails,costPrimary:pricing?.pricingRule?.cost})
+        const newPricingId :any = pricing?.pricingRule?.id;
+        console.log(newPricingId, "pricefn");
+
+        // Update the pricing ID in the state
+        setPricingId(newPricingId);
     }
-    const handleAddPlayerCost =(pricing) =>{
-        setAddPlayersData({...addPlayersData,cost :pricing?.pricingRule?.cost})
+    const handleAddPlayerCost = (pricing) => {
+        //    console.log(pricing?.pricingRule?.id,"pricefn");
+        //    setPricingId(pricing?.pricingRule?.id);
+        const newPricingId :any = pricing?.pricingRule?.id;
+        console.log(newPricingId, "pricefn");
+
+        // Update the pricing ID in the state
+        setPricingId(newPricingId);
+
+        // Update the pricingRuleIds array
+       // pricingRuleIds.push(newPricingId);
     }
 
     const handleAddPlayer = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -518,20 +550,23 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
 
     }
     //   console.log(bookingDetails.startDate?.getDay(), bookingDetails.endDate, "startend")
+    
     const handlePlayerSubmit = (values) => {
-        console.log(addPlayersData,values,"addpaly");
-        
+        console.log(addPlayersData, values, "addpaly");
+
         if (!editAddPlayer.check) {
 
             setAddPlayersData([...addPlayersData, values]);
+            pricingRuleIdsRef.current.push(pricingId)
         }
         else {
             const data = [...addPlayersData];
             data[editAddPlayer.index] = addPlayers;
             setAddPlayersData(data);
         }
+        handleCostPricing();
     }
-       console.log(addPlayersData, "addpalyers")
+    console.log(addPlayersData, "addpalyers")
 
     let facilityItemIds = [];
     //  console.log(facilityItemIds,"ids")
@@ -618,9 +653,18 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         setEditAddPlayer({ check: true, index: index });
         setAddShow(true);
     }
-   // console.log(nameDisClose, addPlayers, "namedisclosecheck")
-   console.log(addPlayersData,"table");
-   
+    // console.log(nameDisClose, addPlayers, "namedisclosecheck")
+    // console.log(addPlayersData, "table");
+    const handleCostPricing = () => {
+        axios.get(`${tempURL}/api/v1/costByPricingRule?ids=${pricingRuleIdsRef.current}&startTime=${startDateTime}&endTime=${endDateTime}&isMultiple=${bookingDetails.bookingOccurence === "Single Booking" ? false : true}&daysList=${bookingDetails.bookingOccurence === "Single Booking" ? "" : bookingDetails.selectedDays}`)
+            .then((response) => { setTotalPrice(response.data); })
+            .catch((err) => console.log(err))
+
+    }
+    console.log(pricingRuleIdsRef, pricingId, "priceIds");
+    console.log(addPlayers,"addd");
+    
+
     return (
         <div className="bg-white mt-2 rounded-2 ">
             <Row className="p-3 mx-0">
@@ -871,6 +915,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                         phoneNumber: "",
                                         pricingRule: "",
                                         facility: "",
+                                        cost:"",
                                     }}
                                 >
                                     {({ handleSubmit, handleChange, values, errors, isValid }) => (
@@ -881,25 +926,25 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                             <Row className="mt-2">
                                                 <Col sm={12} lg={6} xl={6}>
                                                     <Form.Label>First Name</Form.Label>
-                                                    <Form.Control type="text" placeholder="Enter First Name" className="mt-1" name="firstName" value={values.firstName} onChange={handleChange} isInvalid={!!errors.firstName} disabled={disable} />
+                                                    <Form.Control type="text" placeholder="Enter First Name" className="mt-1" name="firstName" value={values.firstName} onChange={handleChange} isInvalid={!!errors.firstName} disabled={buttonText === 'Edit'} />
                                                     <Form.Control.Feedback type={"invalid"} >{errors.firstName}</Form.Control.Feedback>
 
                                                 </Col>
                                                 <Col sm={12} lg={6} xl={6}>
                                                     <Form.Label>Last Name</Form.Label>
-                                                    <Form.Control type="text" placeholder="Enter Last Name" className="mt-1" name="lastName" value={values.lastName} onChange={handleChange} isInvalid={!!errors.lastName} disabled={disable} />
+                                                    <Form.Control type="text" placeholder="Enter Last Name" className="mt-1" name="lastName" value={values.lastName} onChange={handleChange} isInvalid={!!errors.lastName} disabled={buttonText === 'Edit'} />
                                                     {errors.lastName && <Form.Control.Feedback type={"invalid"} >{errors.lastName}</Form.Control.Feedback>}
                                                 </Col>
                                             </Row>
                                             <Row className="mt-2">
                                                 <Col>
                                                     <Form.Label>Phone Number</Form.Label>
-                                                    <Form.Control type="number" placeholder="Enter Phone Number" className="mt-1" name="phoneNumber" value={values.phoneNumber} onChange={handleChange} isInvalid={!!errors.phoneNumber} disabled={disable} />
+                                                    <Form.Control type="number" placeholder="Enter Phone Number" className="mt-1" name="phoneNumber" value={values.phoneNumber} onChange={handleChange} isInvalid={!!errors.phoneNumber} disabled={buttonText === 'Edit'} />
                                                     {errors.phoneNumber && <Form.Control.Feedback type={"invalid"} >{errors.phoneNumber}</Form.Control.Feedback>}
                                                 </Col>
                                                 <Col>
                                                     <Form.Label>Email address</Form.Label>
-                                                    <Form.Control type="text" placeholder="Enter Email address" className="mt-1" name="emailAddress" value={values.emailAddress} onChange={handleChange} isInvalid={!!errors.emailAddress} disabled={disable} />
+                                                    <Form.Control type="text" placeholder="Enter Email address" className="mt-1" name="emailAddress" value={values.emailAddress} onChange={handleChange} isInvalid={!!errors.emailAddress} disabled={buttonText === 'Edit'} />
                                                     <Form.Control.Feedback type={"invalid"} >{errors.emailAddress}</Form.Control.Feedback>
                                                 </Col>
                                             </Row>
@@ -926,7 +971,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                                                 onChange={() => handleChange({ target: { name: 'facility', value: facilities?.name } })}
                                                                                 defaultChecked={values.facility === `${facilities?.name}`}
                                                                                 isInvalid={!!errors.facility}
-                                                                                disabled={disable}
+                                                                                disabled={buttonText === 'Edit'}
                                                                             />)
                                                                     })}
 
@@ -956,7 +1001,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                                         defaultChecked={values.pricingRule === `${pricing?.pricingRule?.ruleName}`}
                                                                         isInvalid={!!errors.pricingRule}
                                                                         onClick={() => handleBookingCost(pricing)}
-                                                                        disabled={disable}
+                                                                        disabled={buttonText === 'Edit'}
                                                                     />
                                                                 </div>
                                                             )
@@ -965,11 +1010,19 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                     <span className="text-danger">{errors.pricingRule}</span>
                                                 </Col>
                                             </Row>
-                                            {disable ? (
-                                                <Button variant="warning" onClick={handleToggleDisable} type="button">Edit</Button>
-                                            ) : (
-                                                <Button variant="success" type="submit" >Save</Button>
-                                            )}
+                                            {/* {disable === true ? (
+                                                    <Button variant="warning" onClick={handleToggleDisable} type="button">Edit</Button>
+                                                ) : (
+                                                    <Button variant="success" type="submit" >Save</Button>
+                                                )} */}
+                                            <div className="text-end">
+                                                <Button variant={buttonText === 'Edit' ? "warning" : "success"} type="submit" className="mt-2 ">{buttonText}</Button>
+                                            </div>
+                                            {/* {!disable ? (
+                                                    <Button variant="success" type="submit">Save</Button>
+                                                ) : (
+                                                    <Button variant="warning" onClick={() => setDisable(false)} type="button">Edit</Button>
+                                                )} */}
                                         </Form>
 
                                     )}
@@ -989,8 +1042,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 <tbody>
 
                                     {Array.isArray(addPlayersData) && addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; lastName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined) => {
-                                        console.log(addPlayersData,"addpalydata");
-                                        
+                                        console.log(addPlayersData, "addpalydata");
+
                                         return (
                                             <tr key={index}>
                                                 <td>{index + 1}</td>
@@ -998,7 +1051,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                 <td>{data.lastName}</td>
                                                 <td>{data.facilityType}</td>
                                                 <td>{data.pricingRule}</td>
-                                                <td>${data.cost}</td>
+                                                <td>{data.cost}</td>
                                                 <td><div className="bg-warning w-50 px-2 mx-auto rounded-2 mt-1" onClick={() => handleEdit(index)}><Icon icon="uil:edit" /></div><div className="bg-danger w-50 px-2 mx-auto  mt-1 rounded-2" onClick={() => deleteRow(index)}><Icon icon="mi:delete" /></div></td>
                                             </tr>
                                         )
@@ -1022,16 +1075,16 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                             pricingRule: "",
                                             sameAsPrimary: false,
                                             nameDisClose: false,
-                                            cost :"",
+                                            cost: "",
                                         }}
-                                        // onSubmit={(values, { setSubmitting }) => {
-                                        //     console.log("Form submitted with values:", values);
-                                        //     setSubmitting(false);
-                                        // }}
+                                    // onSubmit={(values, { setSubmitting }) => {
+                                    //     console.log("Form submitted with values:", values);
+                                    //     setSubmitting(false);
+                                    // }}
                                     >
-                                        {({ handleSubmit,handleChange, values, errors, setFieldValue ,touched }) => (
-                                           <Form onSubmit={handleSubmit}>
-                                                {console.log(values,errors, "val")}
+                                        {({ handleSubmit, handleChange, values, errors, setFieldValue, touched }) => (
+                                            <Form onSubmit={handleSubmit}>
+                                                {console.log(values, errors, "val")}
                                                 <Form.Check
                                                     inline
                                                     label="Name not disclosed"
@@ -1100,10 +1153,12 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                     // onClick={(e) => handleAddPlayer(e)}
                                                     // checked={values.sameAsPrimary}
                                                     // onChange={(e) => handleAddPlayer(e)}
-                                                    onChange={(e) => {setFieldValue('sameAsPrimary', e.target.checked);
-                                                                      setFieldValue('pricingRule',bookingDetails.pricingRuleCheck);
-                                                                      setFieldValue('facilityType',bookingDetails.facilityCheck);                                             
-                                                                     }}
+                                                    onChange={(e) => {
+                                                        setFieldValue('sameAsPrimary', e.target.checked);
+                                                        setFieldValue('pricingRule', bookingDetails.pricingRuleCheck);
+                                                        setFieldValue('facilityType', bookingDetails.facilityCheck);
+                                                        setFieldValue('cost', addPlayers.cost);
+                                                    }}
 
                                                 />
                                                 <Row className="mt-3 d-flex justify-content-between ">
@@ -1120,7 +1175,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                                                     type={"radio"}
                                                                                     // id={`${type}`}
                                                                                     label={`${facility?.name}`}
-                                                                                    value={values.sameAsPrimary ? bookingDetails.facilityCheck :`${facility?.name}`}
+                                                                                    value={values.sameAsPrimary ? bookingDetails.facilityCheck : `${facility?.name}`}
                                                                                     name="facilityType"
                                                                                     disabled={values.sameAsPrimary === true}
                                                                                     onClick={() => handleBookFacility(facility)}
@@ -1150,14 +1205,13 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                                             type={"radio"}
                                                                             // id={`${type}`}
                                                                             label={`${pricing?.pricingRule?.ruleName}`}
-                                                                            value={values.sameAsPrimary === true ? bookingDetails.pricingRuleCheck :`${pricing?.pricingRule?.ruleName}`}
+                                                                            value={values.sameAsPrimary ? bookingDetails.pricingRuleCheck : `${pricing?.pricingRule?.ruleName}`}
                                                                             name="pricingRule"
                                                                             disabled={values.sameAsPrimary === true}
-                                                                           // onClick={() => handleAddPlayerCost(pricing)}
-
-                                                                            onChange={() => {handleChange({ target: { name: 'pricingRule', value: pricing?.pricingRule?.ruleName } }); setFieldValue("cost",pricing?.pricingRule?.cost)}}
-                                                                          //  defaultChecked={bookingDetails.pricingRuleCheck}
-                                                                            isInvalid ={!!errors.pricingRule}
+                                                                            onClick={() => handleAddPlayerCost(pricing)}
+                                                                            onChange={() => { handleChange({ target: { name: 'pricingRule', value: pricing?.pricingRule?.ruleName } }); setFieldValue("cost", pricing?.pricingRule?.cost) }}
+                                                                            //  defaultChecked={bookingDetails.pricingRuleCheck}
+                                                                            isInvalid={!!errors.pricingRule}
                                                                         />
 
                                                                     </div>
@@ -1172,7 +1226,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                 </div>
                                                 <div className="text-center mt-2">
 
-                                                    <Button variant="danger" type ="button" className="w-75" onClick={handleAddPlayerClose}>Close</Button>
+                                                    <Button variant="danger" type="button" className="w-75" onClick={handleAddPlayerClose}>Close</Button>
                                                 </div>
                                             </Form>
                                         )}
@@ -1205,7 +1259,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                             <div>Facility Type</div>
                             <div className="fw-bold mt-2">{bookingDetails.facilityType}</div>
                             <hr />
-                            <div className="fw-bold">Player's Facility and Pricing Details</div>
+                            <div className="fw-bold">Player's Facility and Pricing Details<span className="bg-danger text-white px-1 rounded-1 ms-1">{addPlayersData.length+1}</span></div>
                             <Table responsive bordered hover striped className="mt-2">
                                 <thead>
                                     {/* <tr>
@@ -1235,7 +1289,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                         <td>{bookingDetails.firstName}</td>
                                         <td>{bookingDetails.facilityCheck}</td>
                                         <td>{bookingDetails.pricingRuleCheck}</td>
-                                        <td>${perCost}</td>
+                                        <td className="fw-bold">${bookingDetails.costPrimary}</td>
                                     </tr>
                                     {Array.isArray(addPlayersData) && addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined | number) => {
                                         let serialnumber: any = index + 2;
@@ -1246,14 +1300,14 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                 <td>{data.firstName}</td>
                                                 <td>{data.facilityType}</td>
                                                 <td>{data.pricingRule}</td>
-                                                <td>{data.cost}</td>
+                                                <td className="fw-bold">${data.cost}</td>
                                             </tr>
                                         )
                                     })}
                                     <tr>
                                         {/* <td>2</td> */}
                                         <td colSpan={4}>Total Price</td>
-                                        <td><span className="bg-dark text-white p-1 rounded-2">${perCost}</span></td>
+                                        <td><span className="bg-dark text-white p-1 rounded-2">${totalPrice}</span></td>
                                     </tr>
                                 </tbody>
                             </Table>
@@ -1280,38 +1334,38 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 <div className="border rounded-2 ">
                                     <Row className="d-flex justify-content-between p-3">
                                         <Col xs={4}>
-                                            <div>Booking Type</div>
-                                            <div>{bookingDetails.bookingType}</div>
+                                            <div className="text-secondary">Booking Type</div>
+                                            <div className="fw-bold">{bookingDetails.bookingType}</div>
                                         </Col>
                                         <Col xs={4}>
-                                            <div>Facility Type</div>
-                                            <div>{bookingDetails.facilities}</div>
+                                            <div className="text-secondary">Facility Type</div>
+                                            <div className="fw-bold">{bookingDetails.facilities}</div>
                                         </Col>
                                         <Col xs={4}>
-                                            <div>Booking Occurence</div>
-                                            <div>{bookingDetails.bookingOccurence}</div>
+                                            <div className="text-secondary">Booking Occurence</div>
+                                            <div className="fw-bold">{bookingDetails.bookingOccurence}</div>
                                         </Col>
 
                                     </Row>
                                     <Row className="d-flex justify-content-between p-3">
                                         <Col xs={4}>
-                                            <div>Start Date and Time</div>
-                                            {bookingDetails.startDate && <div className="fw-medium"><Moment format="MMMM DD YYYY ">{bookingDetails.startDate}</Moment>{bookingDetails.startTime} </div>}
+                                            <div className="text-secondary">Start Date and Time</div>
+                                            {bookingDetails.startDate && <div className="fw-bold"><Moment format="MMMM DD YYYY ">{bookingDetails.startDate}</Moment>{bookingDetails.startTime} </div>}
                                         </Col>
                                         <Col xs={4}>
-                                            <div>End Date and Time</div>
-                                            {bookingDetails.endDate && <div className="fw-medium"><Moment format="MMMM DD YYYY ">{bookingDetails.endDate}</Moment>{bookingDetails.startTime} </div>}
+                                            <div className="text-secondary">End Date and Time</div>
+                                            {bookingDetails.endDate && <div className="fw-bold"><Moment format="MMMM DD YYYY ">{bookingDetails.endDate}</Moment>{bookingDetails.startTime} </div>}
                                         </Col>
                                         <Col xs={4}>
-                                            <div>Notes</div>
-                                            <div>{bookingDetails.notes}</div>
+                                            <div className="text-secondary">Notes</div>
+                                            <div className="fw-bold">{bookingDetails.notes}</div>
                                         </Col>
 
                                     </Row>
                                     <div className="p-2">
 
 
-                                        <div className="fw-bold">Player's Facility and Pricing Details</div>
+                                        <div className="fw-bold">Player's Facility and Pricing Details <span className="bg-danger text-white px-1 rounded-1 ms-1">{addPlayersData.length+1}</span></div>
                                         <Table responsive bordered hover striped className="mt-2">
                                             <thead>
                                                 {/* <tr>
@@ -1336,7 +1390,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                     <td>{bookingDetails.firstName}</td>
                                                     <td>{bookingDetails.facilityCheck}</td>
                                                     <td>{bookingDetails.pricingRuleCheck}</td>
-                                                    <td>${perCost}</td>
+                                                    <td className="fw-bold">${bookingDetails.costPrimary}</td>
                                                 </tr>
                                                 {Array.isArray(addPlayersData) && addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined | number) => {
 
@@ -1348,14 +1402,14 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                             <td>{data.firstName}</td>
                                                             <td>{data.facilityType}</td>
                                                             <td>{data.pricingRule}</td>
-                                                            <td>{data.cost}</td>
+                                                            <td className="fw-bold">${data.cost}</td>
                                                         </tr>
                                                     )
                                                 })}
                                                 <tr>
                                                     {/* <td>2</td> */}
-                                                    <td colSpan={4}>Total Price</td>
-                                                    <td><span className="bg-dark text-white p-1 rounded-2">${perCost}</span></td>
+                                                    <td colSpan={4} className="fw-bold">Total Price</td>
+                                                    <td><span className="bg-dark text-white p-1 rounded-2">${totalPrice}</span></td>
                                                 </tr>
                                             </tbody>
                                         </Table>
@@ -1393,7 +1447,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 </div>
 
                                 <div className="text-center">
-                                    <Button variant="danger" className="mt-4">Book Now</Button>
+                                    <Button variant="danger" className="mt-4" >Book Now</Button>
                                 </div>
                             </Col>
                         </Row>
