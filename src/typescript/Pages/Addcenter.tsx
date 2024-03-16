@@ -174,8 +174,20 @@ const AddCenter: React.FC<AddCenterProps> = ({ setOrgDetails }) => {
   //   return isConsecutive ? `${toArray[0]}-${toArray[toArray.length - 1]}` : inputString;
   // };
   const formatDays = (inputString) => {
-    const toArray = inputString.split(",");
+    if (!inputString || inputString.trim() === '') {
+      return '';
+  }
+
+  // If the input string is a single day, return it directly
+  if (!inputString.includes(',')) {
+      return inputString;
+  }
+    console.log(inputString,"fdcd");
+     const toArray = inputString?.split(",")
+   //  console.log(toArray[0],"toarr");
+     
     const dayCode = ["Mon", "Tue", "Wed", "Thur", "Fri", "Sat", "Sun"];
+    
     const startDayIndex = dayCode.indexOf(toArray[0]);
     let isConsecutive = true;
   
@@ -260,9 +272,10 @@ return (
                 <div className="my-3 ">
                   <div>
                     <div className="text-secondary fw-bold">Business hours</div>
-                    
+                    {console.log(center?.centerHours[0]?.weekday,"weeky")}
                    
-                    {formatDays(center?.centerHours[0]?.weekday)}:<span> {center?.centerHours[0]?.startTime} To</span> {center?.centerHours[0]?.endTime}
+                    {formatDays(center?.centerHours[0]?.weekday)}
+                    :<span> {center?.centerHours[0]?.startTime} To</span> {center?.centerHours[0]?.endTime}
 
                   </div>
                 </div>

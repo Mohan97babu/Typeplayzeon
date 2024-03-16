@@ -29,6 +29,8 @@ interface bookingDetails {
   facilityCheck: string;
   pricingRuleCheck: string;
   selectedDays: any[];
+  daysValues:any[];
+  costPrimary:string;
 }
 function App() {
 
@@ -53,7 +55,9 @@ function App() {
     notes: "",
     facilityCheck: "",
     pricingRuleCheck: "",
-    selectedDays: []
+    selectedDays: [],
+    daysValues:[],
+    costPrimary:"",
   });
  
   useEffect(() => {

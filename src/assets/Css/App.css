@@ -104,5 +104,11 @@
  background-color: red !important;
  color:white !important;
 }
+.rbc-header {
+  /* Add your custom styles for resource headers */
+  background-color: red !important;
+  color: white !important;
+  font-weight: bold;
+}
 
 
