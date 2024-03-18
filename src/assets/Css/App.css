@@ -95,11 +95,11 @@
   
 }
 /* .rbc-toolbar button {
-  background-color: blue;
+  background-color: blue !important;
   color:green
 } */
 
-/* Style the active button */
+
 .rbc-toolbar button.rbc-active {
  background-color: red !important;
  color:white !important;
@@ -110,5 +110,11 @@
   color: white !important;
   font-weight: bold;
 }
+input[type="radio"]:checked{
+  background-color: red!important;
+  /* background-color: red !important; */
+  box-shadow: none !important;
+}
+
 
 

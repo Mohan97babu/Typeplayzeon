@@ -90,7 +90,7 @@ function App() {
         </div>
       </BrowserRouter>
     </Container>
-    // <Reservation bookingDetails={bookingDetails} setBookingDetails={setBookingDetails} />
+   //  <Reservation bookingDetails={bookingDetails} setBookingDetails={setBookingDetails} />
 
   );
 }

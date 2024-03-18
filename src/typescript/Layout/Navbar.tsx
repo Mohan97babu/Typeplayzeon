@@ -8,7 +8,7 @@ const NavBar: React.FC<{setIsSignedIn :React.Dispatch<React.SetStateAction<boole
         setIsSignedIn(false);
 
     }
-    console.log(orgDetails,"orgdet")
+ //   console.log(orgDetails,"orgdet")
     return (
         <Navbar expand="lg" className="bg-dark">
             <Container fluid>

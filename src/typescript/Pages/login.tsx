@@ -1,8 +1,10 @@
 import React, { useState, ChangeEvent } from "react";
-import { Container, Row, Col, Button } from "react-bootstrap";
+import { Container, Row, Col, Button,Form, Spinner } from "react-bootstrap";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import logo1 from "../../assets/images/LogoNav.png";
+import { Formik } from "formik";
+import * as yup from "yup";
 
 interface LoginDetails {
   userName: string;
@@ -14,16 +16,21 @@ const Login: React.FC<{setIsSignedIn: React.Dispatch<React.SetStateAction<boolea
     userName: "",
     password: "",
   });
-const tempURL = process.env.REACT_APP_BASEURLTEMP;
+  const [spinner,setSpinner] =useState(true);
+ const tempURL = process.env.REACT_APP_BASEURLTEMP;
 const orgURL = process.env.REACT_APP_BASEURLORG;
 const navigate = useNavigate();
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setLoginDetails({ ...loginDetails, [event.target.name]: event.target.value });
     
   };
-  const handleSubmit = async () =>
+  const schema =yup.object().shape({
+    userName:yup.string().email().required(),
+    password:yup.string().required(),
+  })
+  const handleLoginSubmit = async (values) =>
   {
-     await axios.post(`${tempURL}/api/user-management/login`,loginDetails)
+     await axios.post(`${tempURL}/api/user-management/login`,values)
     .then((response) => {
       console.log(response,"65655")
       localStorage.setItem("AccessToken",response.data.accessToken);
@@ -59,16 +66,32 @@ const navigate = useNavigate();
               {/* <div className="d-flex justify-content-center">
                   <img src={logo1} width={200} height={100} />
                 </div> */}
+                <Formik
+                validationSchema={schema}
+                onSubmit={handleLoginSubmit}
+                initialValues={{
+                  userName:"",
+                  password:"",
+                }}
+                >
+               {({handleSubmit,handleChange,values,errors})=>(
+                <Form onSubmit={handleSubmit}>
               <label className="my-2 text-black">Email Address</label>
-              <input type="email" className="form-control " name="userName" onChange={(e) => handleChange(e)} placeholder="Email Address" value={loginDetails.userName} />
+              <input type="email" className="form-control " name="userName" onChange={(e) => handleChange(e)} placeholder="Email Address" value={values.userName} />
+              <p className="text-danger">{errors.userName}</p>
               <label className="my-2 text-black">Password</label>
-              <input type="password" className="form-control " name="password" onChange={(e) => handleChange(e)} placeholder="Password" value={loginDetails.password} />
+              <input type="password" className="form-control " name="password" onChange={(e) => handleChange(e)} placeholder="Password" value={values.password} />
+              <p className="text-danger">{errors.password}</p>
               <div className="d-flex justify-content-end mt-3 text-danger">Forgot Password?</div>
               <div>
-                <Button variant="danger" className="  w-100 my-3 shadow-3" onClick={() =>handleSubmit()}>
+                <Button variant="danger" className="  w-100 my-3 shadow-3" type="submit">
                   Sign in
+                  {/* <div>{spinner ? <Spinner animation="border" variant="danger" size="sm" /> : null}</div> */}
                 </Button>
-              </div>
+               </div>
+                </Form>
+               )}             
+                </Formik>
               <Row className="py-1">
                 <Col>
                   <div className="text-black">Don't have an Account?</div>
