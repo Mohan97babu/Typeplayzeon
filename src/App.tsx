@@ -31,6 +31,7 @@ interface bookingDetails {
   selectedDays: any[];
   daysValues:any[];
   costPrimary:string;
+  sportsId:string;
 }
 function App() {
 
@@ -58,6 +59,7 @@ function App() {
     selectedDays: [],
     daysValues:[],
     costPrimary:"",
+    sportsId:"",
   });
  
   useEffect(() => {

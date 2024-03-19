@@ -5,25 +5,14 @@ import { useNavigate } from "react-router-dom";
 import logo1 from "../../assets/images/LogoNav.png";
 import { Formik } from "formik";
 import * as yup from "yup";
-
-interface LoginDetails {
-  userName: string;
-  password: string;
-}
+import InputField from "../components/CommonInputs/InputField";
 
 const Login: React.FC<{setIsSignedIn: React.Dispatch<React.SetStateAction<boolean>>}> = ({setIsSignedIn}) => {
-  const [loginDetails, setLoginDetails] = useState<LoginDetails>({
-    userName: "",
-    password: "",
-  });
+
   const [spinner,setSpinner] =useState(true);
  const tempURL = process.env.REACT_APP_BASEURLTEMP;
 const orgURL = process.env.REACT_APP_BASEURLORG;
 const navigate = useNavigate();
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setLoginDetails({ ...loginDetails, [event.target.name]: event.target.value });
-    
-  };
   const schema =yup.object().shape({
     userName:yup.string().email().required(),
     password:yup.string().required(),
@@ -49,23 +38,12 @@ const navigate = useNavigate();
           <Row className="p-2  mt-5">
             <Col xs={7} md={5} lg={7} xl={7} className="text-center text-white d-flex justify-content-center align-items-center d-none d-sm-none d-md-block my-auto ">
               <div>
-                <div className="mx-5">
-                  <span className="fw-normal fs-3 ">Book Sports Center</span>
-                <hr  />
-                </div>
-                <div className="mx-5">
-                  <span className="fw-normal fs-3">Connect with other players</span> 
-                <hr />
-                </div>
-                <div>
-                  <span className="fw-normal fs-3">Sign up for Lessons</span>
-                </div>
+                <div className="mx-5"><span className="fw-normal fs-3 ">Book Sports Center</span><hr  /> </div>
+                <div className="mx-5"><span className="fw-normal fs-3">Connect with other players</span>  <hr /></div>
+                <div> <span className="fw-normal fs-3">Sign up for Lessons</span></div>
               </div>
             </Col>
             <Col xs={4} sm={12} md={7} lg={4} xl={4} className=" text-white  p-4 rounded-2" style={{ backgroundColor: "whitesmoke" }}>
-              {/* <div className="d-flex justify-content-center">
-                  <img src={logo1} width={200} height={100} />
-                </div> */}
                 <Formik
                 validationSchema={schema}
                 onSubmit={handleLoginSubmit}
@@ -76,12 +54,8 @@ const navigate = useNavigate();
                 >
                {({handleSubmit,handleChange,values,errors})=>(
                 <Form onSubmit={handleSubmit}>
-              <label className="my-2 text-black">Email Address</label>
-              <input type="email" className="form-control " name="userName" onChange={(e) => handleChange(e)} placeholder="Email Address" value={values.userName} />
-              <p className="text-danger">{errors.userName}</p>
-              <label className="my-2 text-black">Password</label>
-              <input type="password" className="form-control " name="password" onChange={(e) => handleChange(e)} placeholder="Password" value={values.password} />
-              <p className="text-danger">{errors.password}</p>
+              <InputField label={"Email Address"} labelClassName={"text-black my-2"} type={"email"} name={"userName"} onChange={handleChange} placeholder={"Enter Email Address"} value={values.userName} errors={errors.userName}/>
+              <InputField label={"Password"} labelClassName={"text-black my-2"} type={"password"} name={"password"} onChange={handleChange} placeholder={"Enter Password"} value={values.password} errors={errors.password}/>
               <div className="d-flex justify-content-end mt-3 text-danger">Forgot Password?</div>
               <div>
                 <Button variant="danger" className="  w-100 my-3 shadow-3" type="submit">

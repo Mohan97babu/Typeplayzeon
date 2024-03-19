@@ -15,6 +15,7 @@ import { eachDayOfInterval, getDay } from 'date-fns';
 import "../../assets/Css/App.css";
 import { Formik } from "formik";
 import * as yup from "yup";
+import EventColors from "../components/SplitComponents/EventColors";
 
 
 interface bookingDetails {
@@ -38,6 +39,7 @@ interface bookingDetails {
     selectedDays: any[];
     costPrimary: string,
     daysValues: any[];
+    sportsId:string;
 }
 interface calendarDetails {
     facilityType: string;
@@ -406,7 +408,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const startDateTime = moment.utc(`${startDate}T${startTime24HourFormat}Z`).add(7, 'hours').format();
     const endDateTime = moment.utc(`${endDate}T${endTime24HourFormat}Z`).add(7, 'hours').format();
     const handleCheckAvialability = () => {
-        axios.get(`${tempURL}/api/v1/facility/getAvailability?centerId.equals=${centerId}&sportId.equals=${sportsId}&startTime=${startDateTime}&endTime=${endDateTime}&isMultiple=${bookingDetails.bookingOccurence === "Single Booking" ? false : true}&days=${bookingDetails.bookingOccurence === "Single Booking" ? "" : bookingDetails.selectedDays}`)
+        axios.get(`${tempURL}/api/v1/facility/getAvailability?centerId.equals=${centerId}&sportId.equals=${bookingDetails.sportsId}&startTime=${startDateTime}&endTime=${endDateTime}&isMultiple=${bookingDetails.bookingOccurence === "Single Booking" ? false : true}&days=${bookingDetails.bookingOccurence === "Single Booking" ? "" : bookingDetails.selectedDays}`)
             .then((response: any) => {
                 if (response?.status === 200) { setAppearForm(true); setApiResponse({ ...apiResponse, checkFacility: response.data }); }
                 else { setErrorsMessage(response); }
@@ -504,21 +506,14 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         .catch((err) => console.log(err))
     }
     // console.log(startDateTime,endDateTime,"startend");
-    
+    const handleFacility =(id) =>
+    {
+        setBookingDetails({...bookingDetails,sportsId:id});
+    }
     return (
         <div className="bg-white mt-2 rounded-2 ">
             <Row className="p-3 mx-0">
-                <Row className=" w-100" sm={12} md={10} lg={12} xl={12}>
-                    <Col sm={12} md={12} lg={9} xl={7} className="d-lg-flex justify-content-lg-between justify-content-md-around" >
-                        <div ><Icon icon="material-symbols:square" style={{ color: " #fc9403" }} /><span>Player/Not paid</span></div>
-                        <div> <Icon icon="material-symbols:square" style={{ color: "yellow" }} /><span>Coach</span></div>
-                        <div>  <Icon icon="material-symbols:square" style={{ color: "purple" }} /><span>Admin</span></div>
-                        <div>  <Icon icon="material-symbols:square" style={{ color: "grey" }} /><span>Maintenance</span></div>
-                        <div> <Icon icon="material-symbols:square" style={{ color: "alice" }} /><span>Tournament</span></div>
-                        <div> <Icon icon="material-symbols:square" style={{ color: "green" }} /><span>Player/Paid</span> </div>
-                    </Col>
-                    <Col sm={12} lg={3} xl={5}><div className="fw-medium fs-5 text-lg-end">Booking Schedules</div></Col>
-                </Row>
+                <EventColors />
             </Row>
             <hr className="my-1" />
             <Row className="p-3 mx-0">
@@ -612,7 +607,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                     <Form.Select aria-label="Default select example" name="facilityType" value={bookingDetails.facilityType} onChange={handleChange}>
                                         {apiResponse.facilityType.map((facility) => {
                                             return (
-                                                <option value={facility.title} >{facility.title}</option>
+                                                <option value={facility.title} onClick={handleFacility(facility.sport.id)} >{facility.title}</option>
                                             );
                                         })}
                                     </Form.Select>
@@ -805,7 +800,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                             </Table>
                             <Offcanvas show={addShow} onHide={handleAddPlayerClose} placement="end">
                                 <Offcanvas.Header closeButton>
-                                    <Offcanvas.Title>Add Player</Offcanvas.Title>
+                                    <Offcanvas.Title>{editAddPlayer.check === false ?"Add":"Edit"} Player</Offcanvas.Title>
                                 </Offcanvas.Header>
                                 <Offcanvas.Body>
 
@@ -939,7 +934,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                         {touched.pricingRule && <span className="text-danger">{errors.pricingRule}</span>}
                                                     </Col>
                                                 </Row>
-                                                <div className="text-center mt-2 "> <Button variant="success" type="submit" className="w-75" >Add</Button> </div>
+                                                <div className="text-center mt-2 "> <Button variant={editAddPlayer.check === false ? "success":"warning"} type="submit" className="w-75" >{editAddPlayer.check === false ?"Add":"Update"}</Button> </div>
                                                 <div className="text-center mt-2"> <Button variant="danger" type="button" className="w-75" onClick={handleAddPlayerClose}>Close</Button> </div>
                                             </Form>
                                         )}
@@ -1018,7 +1013,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                         <Row>
                             <Col sm={12} md={8} lg={8} xl={8} className=" border-end ">
                                 <div className="text-center">
-                                    <img src={apiResponse?.facilityType[sportsId-1]?.url}></img>
+                                    <img src={apiResponse?.facilityType[(bookingDetails.sportsId)-1]?.url}></img>
                                     <div>{apiResponse?.facilityType?.title}</div>
                                 </div>
                                 <div className="border rounded-2 ">
