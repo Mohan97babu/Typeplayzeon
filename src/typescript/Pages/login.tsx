@@ -6,6 +6,7 @@ import logo1 from "../../assets/images/LogoNav.png";
 import { Formik } from "formik";
 import * as yup from "yup";
 import InputField from "../components/CommonInputs/InputField";
+import Swal from "sweetalert2";
 
 const Login: React.FC<{setIsSignedIn: React.Dispatch<React.SetStateAction<boolean>>}> = ({setIsSignedIn}) => {
 
@@ -22,9 +23,18 @@ const navigate = useNavigate();
      await axios.post(`${tempURL}/api/user-management/login`,values)
     .then((response) => {
       console.log(response,"65655")
-      localStorage.setItem("AccessToken",response.data.accessToken);
-       navigate("/center"); setIsSignedIn(true); })
-    .catch((err) => console.log(err))
+     localStorage.setItem("AccessToken",response.data.accessToken);
+       setIsSignedIn(true); 
+       Swal.fire({
+        icon: 'success',
+        title: 'Login Successful!',
+        text: `Welcome back`,
+      });navigate("/center"); })
+    .catch((err) => {console.log(err);Swal.fire({
+      icon: 'error',
+      title: 'Login Failed!',
+      text: 'Invalid EmailAddress or password.',
+    });})
   }
 
   return (
@@ -43,7 +53,7 @@ const navigate = useNavigate();
                 <div> <span className="fw-normal fs-3">Sign up for Lessons</span></div>
               </div>
             </Col>
-            <Col xs={4} sm={12} md={7} lg={4} xl={4} className=" text-white  p-4 rounded-2" style={{ backgroundColor: "whitesmoke" }}>
+            <Col  sm={12} md={7} lg={4} xl={4} className=" text-white  p-4 rounded-2" style={{ backgroundColor: "whitesmoke" }}>
                 <Formik
                 validationSchema={schema}
                 onSubmit={handleLoginSubmit}

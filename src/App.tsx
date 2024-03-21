@@ -31,7 +31,7 @@ interface bookingDetails {
   selectedDays: any[];
   daysValues:any[];
   costPrimary:string;
-  sportsId:string;
+  sportsId:any;
 }
 function App() {
 
@@ -59,8 +59,9 @@ function App() {
     selectedDays: [],
     daysValues:[],
     costPrimary:"",
-    sportsId:"",
+    sportsId:1,
   });
+ console.log(bookingDetails,"bookdet");
  
   useEffect(() => {
     localStorage.setItem('isSignedIn', isSignedIn.toString());
@@ -84,7 +85,7 @@ function App() {
               <Route path="/" element={<Login setIsSignedIn={setIsSignedIn} />} />
               <Route element={<PrivateRoutes isSignedIn={isSignedIn} />} >
                 <Route path="/center" element={<Addcenter setOrgDetails={setOrgDetails} />} />
-                <Route path="/reservation" element={<Reservation bookingDetails={bookingDetails} setBookingDetails={setBookingDetails}  />} />
+                <Route path="/reservation" element={<Reservation bookingDetails={bookingDetails} setBookingDetails={setBookingDetails} orgDetails={orgDetails} />} />
               </Route>
               <Route path="*" element={<Pagenotfound />} />
             </Routes>

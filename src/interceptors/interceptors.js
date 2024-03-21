@@ -16,7 +16,8 @@ const interceptors = () => {
       return config;
     },
     (error) => {
-      return Promise.reject(error);
+       return Promise.reject(error);
+     
     }
   );
   axios.interceptors.response.use(
@@ -24,7 +25,11 @@ const interceptors = () => {
       return response;
     },
     (error) =>
+     
       error?.response.data.message
+   
+    
+    
   );
 }
 export default interceptors

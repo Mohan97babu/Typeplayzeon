@@ -16,6 +16,7 @@ import "../../assets/Css/App.css";
 import { Formik } from "formik";
 import * as yup from "yup";
 import EventColors from "../components/SplitComponents/EventColors";
+import Swal from "sweetalert2";
 
 
 interface bookingDetails {
@@ -39,7 +40,7 @@ interface bookingDetails {
     selectedDays: any[];
     costPrimary: string,
     daysValues: any[];
-    sportsId:string;
+    sportsId:any;
 }
 interface calendarDetails {
     facilityType: string;
@@ -55,7 +56,7 @@ interface apiResponse {
     checkFacility: any[];
 }
 
-const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails: React.Dispatch<React.SetStateAction<bookingDetails>> }> = ({ bookingDetails, setBookingDetails }) => {
+const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails: React.Dispatch<React.SetStateAction<bookingDetails>> }> = ({ bookingDetails, setBookingDetails,orgDetails }) => {
     const [show, setShow] = useState(false);
     const [addShow, setAddShow] = useState(false)
     const [bookShow, setBookShow] = useState(false);
@@ -85,6 +86,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         addPricingCheck: "",
         cost: "",
     })
+    console.log(orgDetails,"vsf")
     const [editAddPlayer, setEditAddPlayer] = useState({
         check: false,
         index: "",
@@ -110,10 +112,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const data = addPlayersData.map((player) => ({
         firstName: player.firstName,
         lastName: player.lastName,
-        sameAsPrimary: player.sameAsPrimary === true ? true : undefined, // Conditionally set sameAsPrimary
+        sameAsPrimary: player.sameAsPrimary === true ? true : false, 
         ...(player.sameAsPrimary === false && {
-            facility: { id: "456" },
-            pricingRule: { id: "789" }
+            facility: { id: player?.facilityId.toString() },
+            pricingRule: { id: player?.pricingRuleId.toString()}
         })
     }));
     //   console.log(data, "playdata");
@@ -152,6 +154,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         sameAsPrimary: yup.boolean(),
         nameDisClose: yup.boolean(),
         cost: yup.string(),
+        facilityId:yup.string(),
     })
     const handleAddPlayerOpen = () => { setAddShow(true) }
     const handleAddPlayerClose = () => { setAddShow(false); clearState(); setNameDisclose(false); setEditAddPlayer({ pricingId: "", check: false, index: "" }) }
@@ -164,7 +167,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const [errorsMessage, setErrorsMessage] = useState("");
 
     const handleFormikSubmit = (event: any) => {
-        setBookingDetails({ ...bookingDetails, firstName: event.firstName, lastName: event.lastName, emailAddress: event.emailAddress, phoneNumber: event.phoneNumber, pricingRuleCheck: event.pricingRule, facilityCheck: event.facility })
+        console.log(event,pricingId,"E");
+        
+        
+        setBookingDetails({ ...bookingDetails, firstName: event.firstName, lastName: event.lastName, emailAddress: event.emailAddress, phoneNumber: event.phoneNumber, pricingRuleCheck: event.pricingRule, facilityCheck: event.facility ,pricingRule:pricingId})
         if (buttonText === 'Save') {
             setButtonText('Edit');
         }
@@ -180,6 +186,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         setBookingDetails({ ...bookingDetails, [e.target.name]: e.target.value });
         if (e.target.name === "bookingOccurence") {
             setBookingDetails({ ...bookingDetails, startDate: null, endDate: null, startTime: "", endTime: "", bookingOccurence: e.target.value });
+            setErrorsMessage("");
+            setApiResponse({...apiResponse,checkFacility:[]});
+            setAppearForm(false);
+            setButtonText("Save");
             setStartTime(null);
             setEndTime(null);
         }
@@ -238,8 +248,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         listSports();
         fetchEventData();
     }, []);
-    const handleBookFacility = async (type: any) => {
-        setBookingDetails({ ...bookingDetails, facilities: type.name });
+    const handleBookFacility = async (type: any) => { 
+        setBookingDetails({ ...bookingDetails, facilities: type.name,facilityCheck:type.id });
         await axios.get(`${tempURL}/api/v1/pricing-rules?centerId=${centerId}&facilityIds=${type?.id}`)
             .then((response) => { setApiResponse({ ...apiResponse, pricingrule: response.data }) })
             .catch(err => console.log(err))
@@ -329,9 +339,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             </div>
         ));
     };
+    let sportID =bookingDetails.sportsId;
 
-
-      console.log(bookingDetails.selectedDays,bookingDetails.daysValues, "dayarr")
+    
     const handleSearchCalendar = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         fetchEventData();
@@ -421,10 +431,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         setAddShow(true);
         console.log("Edit icon clicked");
         handleCostPricing();
-        //  pricingRuleIdsRef.current.splice(pricingRuleIdsRef.current.indexOf(data.pricingRuleId),1)           
+                 
     }
-    //  console.log(pricingRuleIdsRef.current,"idsf");
-
+      console.log(bookingDetails.sportsId,"idsf");
+   
     const handleCostPricing = () => {
         axios.get(`${tempURL}/api/v1/costByPricingRule?ids=${pricingRuleIdsRef.current}&startTime=${startDateTime}&endTime=${endDateTime}&isMultiple=${bookingDetails.bookingOccurence === "Single Booking" ? false : true}&daysList=${bookingDetails.bookingOccurence === "Single Booking" ? "" : bookingDetails.daysValues}`)
             .then((response) => { setTotalPrice(response.data); })
@@ -452,6 +462,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
 
     const CalendarEndTime = new Date();
     CalendarEndTime.setHours(endTimeParts[0], endTimeParts[1], endTimeParts[2], 0);
+    const bookId = localStorage.getItem("bookid");
     const bookReservation = {
        start: startDateTime,
         end: endDateTime,
@@ -467,29 +478,29 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 "lastName": `${bookingDetails.lastName}`,
                 "email": `${bookingDetails.emailAddress}`,
                 "phoneNumber": `${bookingDetails.phoneNumber}`,
-                "facilityId": 65551,
-                "facilityName": "Yoga room",
-                "pricingRuleName": "Player Pricing Rule",
-                "pricingRule": 65401,
-                "price": "60",
+                "facilityId": parseInt(bookingDetails.facilityCheck),
+                "facilityName": bookingDetails.facilityType,
+                "pricingRuleName": bookingDetails.pricingRuleCheck,
+                "pricingRule":parseInt(bookingDetails.pricingRule),
+                "price": bookingDetails.costPrimary,
                 "bookingSource": "Card",
                 "bookingStatus": "PENDING",
                 "createdAt": "2023-11-29T05:56:44.171333Z",
-                "createdBy": "cd2fd9a0-6ec9-4ba3-b529-40718990baab",
+                "createdBy": bookId,    
                 "paymentStatus": "CREATED",
                 "rateplan": "3",
                 "updatedAt": "2023-12-26T10:19:18.785Z",
-                "updatedBy": "cd2fd9a0-6ec9-4ba3-b529-40718990baab"
+                "updatedBy": bookId
             }
         },
         "day": [],
-        "isSingleBooking": "Single Booking",
+        "isSingleBooking": bookingDetails.bookingOccurence === "Single Booking" ? "Single Booking":"Multiple Booking",
         "facilityPricingDTO": {
             "facility": {
-                "id": 65551
+                "id": parseInt(bookingDetails.facilityCheck)
             },
             "pricingRule": {
-                "id": 65401
+                "id": parseInt(bookingDetails.pricingRule)
             }
         },
         "reservationPlayers": data
@@ -502,14 +513,22 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     // }, [editAddPlayer.index, addPlayersData]);
     const handleBookReservation =()=>{
         axios.post(`${tempURL}/api/v1/reservations`,bookReservation)
-        .then((response) =>console.log(response))
-        .catch((err) => console.log(err))
+        .then((response) =>{console.log(response); Swal.fire({
+            icon: 'success',
+            title: 'Booked Successfully',
+          });})
+        .catch((err) => {console.log(err); Swal.fire({
+            icon: 'error',
+            title: 'Booking Failed',
+          });})
     }
     // console.log(startDateTime,endDateTime,"startend");
     const handleFacility =(id) =>
     {
         setBookingDetails({...bookingDetails,sportsId:id});
     }
+  //  console.log(addPlayersData,"addpalye");
+    console.log(bookReservation,"bookrev")
     return (
         <div className="bg-white mt-2 rounded-2 ">
             <Row className="p-3 mx-0">
@@ -556,7 +575,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     </div>
                 </div>
             </Row>
-            <Row className="p-2 mx-0">
+            <Row className="p-2 mx-0 w-100">
                 <Calendar
                     localizer={localizer}
                     // events={events}
@@ -576,16 +595,16 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     // components={{
                     //     resourceHeader: CustomResourceHeader
                     //   }}
-                    resourcePropGetter={(resource) => ({
-                        className: 'my-custom-resource-header', // Additional CSS class for resource headers
-                        style: {
-                            backgroundColor: "red", // Example: Dynamically set background color based on resource data
-                            fontWeight: resource.highlight ? 'bold' : 'normal', // Example: Conditional styling
-                        },
-                    })}
+                    // resourcePropGetter={(resource) => ({
+                    //     className: 'my-custom-resource-header', // Additional CSS class for resource headers
+                    //     style: {
+                    //         backgroundColor: "red", // Example: Dynamically set background color based on resource data
+                    //         fontWeight: resource.highlight ? 'bold' : 'normal', // Example: Conditional styling
+                    //     },
+                    // })}
                 />
             </Row>
-            <Offcanvas show={show} onHide={handleClose} backdrop="static" placement="end" className=" w-75">
+            <Offcanvas show={show} onHide={handleClose} backdrop="static" placement="end" className="w-75">
                 <Offcanvas.Header className="bg-gainsboro" closeButton>
                     <Offcanvas.Title >Booking</Offcanvas.Title>
                 </Offcanvas.Header>
@@ -607,7 +626,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                     <Form.Select aria-label="Default select example" name="facilityType" value={bookingDetails.facilityType} onChange={handleChange}>
                                         {apiResponse.facilityType.map((facility) => {
                                             return (
-                                                <option value={facility.title} onClick={handleFacility(facility.sport.id)} >{facility.title}</option>
+                                                <option value={facility.title} onClick={() =>handleFacility(facility.sport.id)} >{facility.title}</option>
                                             );
                                         })}
                                     </Form.Select>
@@ -624,7 +643,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 {bookingDetails.bookingOccurence === "Multiple Booking" &&
                                     <Col>
                                         <Form.Label>Frequency</Form.Label>
-                                        <Form.Select aria-label="Default select example" name="frequency" value={bookingDetails.frequency} onChange={handleChange}>
+                                        <Form.Select aria-label="Default select example" name="frequency" value={bookingDetails.frequency} onChange={handleChange} disabled>
                                             <option value={"Weekly"}>Weekly</option>
                                         </Form.Select>
                                     </Col>}
@@ -700,19 +719,19 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                 </Col>
                                             </Row>
                                             <Row className="mt-2">
-                                                <Col>
+                                                <Col sm={12} lg={6} xl={6}>
                                                     <Form.Label>Phone Number</Form.Label>
                                                     <Form.Control type="number" placeholder="Enter Phone Number" className="mt-1" name="phoneNumber" value={values.phoneNumber} onChange={handleChange} isInvalid={!!errors.phoneNumber} disabled={buttonText === 'Edit'} />
                                                     {errors.phoneNumber && <Form.Control.Feedback type={"invalid"} >{errors.phoneNumber}</Form.Control.Feedback>}
                                                 </Col>
-                                                <Col>
+                                                <Col sm={12} lg={6} xl={6}>
                                                     <Form.Label>Email address</Form.Label>
                                                     <Form.Control type="text" placeholder="Enter Email address" className="mt-1" name="emailAddress" value={values.emailAddress} onChange={handleChange} isInvalid={!!errors.emailAddress} disabled={buttonText === 'Edit'} />
                                                     <Form.Control.Feedback type={"invalid"} >{errors.emailAddress}</Form.Control.Feedback>
                                                 </Col>
                                             </Row>
                                             <Row className="mt-3 d-flex justify-content-between ">
-                                                <Col xs={6} className="">
+                                                <Col sm={12} lg={6} xl={6} className="">
                                                     <Form.Label className="px-0 fw-medium">Facility</Form.Label>
                                                     <div className="h-35 border p-2" >
                                                         {Object.values(apiResponse.facilities).map((type: any, index: any) => {
@@ -738,10 +757,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                     </div>
                                                     {values.facility === "" && <span className="text-danger" >{errors.facility}</span>}
                                                 </Col>
-                                                <Col xs={6} className="">
+                                                <Col sm={12} lg={6} xl={6} className="">
                                                     <Form.Label className="px-0 fw-medium">Pricing Rule</Form.Label>
                                                     <div className="h-35 border p-2">
-                                                        <div className="fw-medium">{bookingDetails.facilityCheck}</div>
+                                                        <div className="fw-medium">{bookingDetails.facilities}</div>
                                                         {Object.values(apiResponse.pricingrule).map((pricing, index) => {
                                                             //    console.log(pricing?.pricingRuleId,"pricein");
 
@@ -772,8 +791,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                     )}
                                 </Formik>
                             </Row>
-                            <div><Button variant="danger" onClick={handleAddPlayerOpen}>Add Player</Button></div>
-                            <Table responsive bordered hover striped className="mt-2">
+                           {/* {buttonText === "Edit" &&  */}
+                           <div><Button variant="danger" onClick={handleAddPlayerOpen}>Add Player</Button></div>
+                           {/* } */}
+                           {addPlayersData.length > 0 && <Table responsive bordered hover striped className="mt-2">
                                 <thead className="border">
                                     {Array.isArray(TableAddPlayers) && TableAddPlayers.map((head) => {
                                         return (
@@ -791,19 +812,18 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                 <td>{data.lastName}</td>
                                                 <td>{data.facilityType}</td>
                                                 <td>{data.pricingRule}</td>
-                                                <td>{data.cost}</td>
+                                                <td>{data.cost ?data.cost:bookingDetails.costPrimary}</td>
                                                 <td><div className="bg-warning w-50 px-2 mx-auto rounded-2 mt-1" onClick={() => handleEdit(index, data)}><Icon icon="uil:edit" /></div><div className="bg-danger w-50 px-2 mx-auto  mt-1 rounded-2" onClick={() => deleteRow(index, data)}><Icon icon="mi:delete" /></div></td>
                                             </tr>
                                         )
                                     })}
                                 </tbody>
-                            </Table>
+                            </Table>}
                             <Offcanvas show={addShow} onHide={handleAddPlayerClose} placement="end">
                                 <Offcanvas.Header closeButton>
                                     <Offcanvas.Title>{editAddPlayer.check === false ?"Add":"Edit"} Player</Offcanvas.Title>
                                 </Offcanvas.Header>
                                 <Offcanvas.Body>
-
                                     <Formik
                                         validationSchema={schemae}
                                         onSubmit={handlePlayerSubmit}
@@ -816,6 +836,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                             nameDisClose: false,
                                             cost: "",
                                             pricingRuleId: "",
+                                            facilityId:"",
                                         }}
                                       //  enableReinitialize={true}
                                     >
@@ -825,7 +846,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                         }} */}
                                         {({ handleSubmit, handleChange, values, errors, setFieldValue, touched, initialValues }) => (
                                             <Form onSubmit={handleSubmit}>
-                                                {console.log(initialValues, "initialValues")}
+                                              
 
                                                 <Form.Check
                                                     inline
@@ -835,10 +856,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                     className="mt-2 "
                                                     checked={!editAddPlayer.check ? values.nameDisClose : addPlayersData[editAddPlayer.index].nameDisClose}
                                                     onClick={(e) => {
-                                                        console.log("Changing field:", e.target.name, "New value:", e.target.value);
+                                                        console.log("Changing field:", e.target.name, "New value:", e.target.value,e.target.checked);
                                                         setFieldValue('nameDisClose', e.target.checked);
-                                                        setFieldValue('firstName', e.target.checked ? "Name not disclosed" : values.firstName);
-                                                        setFieldValue('lastName', e.target.checked ? "Name not disclosed" : values.lastName);
+                                                        setFieldValue('firstName', e.target.checked === true ? "Name not disclosed" : "");
+                                                        setFieldValue('lastName', e.target.checked === true ? "Name not disclosed" : "");
                                                         setFieldValue('touched.firstName', e.target.checked);
                                                         setFieldValue('touched.lastName', e.target.checked);
                                                     }}
@@ -886,6 +907,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                                 return (
                                                                     <div key={index}>
                                                                         {type.map((facility: any) => {
+                                                                           
+                                                                            
                                                                             return (
                                                                                 <Form.Check
                                                                                     type={"radio"}
@@ -894,7 +917,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                                                     name="facilityType"
                                                                                     disabled={values.sameAsPrimary === true}
                                                                                     onClick={() => handleBookFacility(facility)}
-                                                                                    onChange={() => { handleChange({ target: { name: 'facilityType', value: facility?.name } }) }}
+                                                                                    onChange={() => { handleChange({ target: { name: 'facilityType', value: facility?.name } });setFieldValue('facilityId',facility?.id) }}
                                                                                     checked={values.facilityType === facility?.name}
                                                                                     isInvalid={!!errors.facilityType && touched.facilityType}
                                                                                    
@@ -942,7 +965,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 </Offcanvas.Body>
                             </Offcanvas>
                             {/* </>} */}
-                            <Row className="mt-4 mx-1">
+                            <Row className="mt-4 mx-1 ">
                                 <Form.Label className="px-0 fw-medium">Notes</Form.Label>
                                 <Form.Control
                                     as="textarea"
@@ -954,7 +977,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 />
                             </Row>
                         </Col>
-                        <Col sm={12} md={12} lg={4} xl={4} className="border border-2  m-md-3 m-lg-0 p-3">
+                        <Col sm={12} md={12} lg={4} xl={4} className="border border-2 mt-2 mt-md-0 m-md-3 m-lg-0 p-3">
                             <div>Booking Type</div>
                             <div className="fw-bold mt-2">{bookingDetails.bookingType}</div>
                             <hr />
@@ -966,6 +989,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                             <div>Facility Type</div>
                             <div className="fw-bold mt-2">{bookingDetails.facilityType}</div>
                             <hr />
+                           {buttonText ==="Edit" && <> 
                             <div className="fw-bold">Player's Facility and Pricing Details<span className="bg-danger text-white px-1 rounded-1 ms-1">{addPlayersData.length + 1}</span></div>
                             <Table responsive bordered hover striped className="mt-2">
                                 <thead>
@@ -991,7 +1015,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                 <td>{data.firstName}</td>
                                                 <td>{data.facilityType}</td>
                                                 <td>{data.pricingRule}</td>
-                                                <td className="fw-bold">${data.cost}</td>
+                                                <td className="fw-bold">${data.cost ?data.cost:bookingDetails.costPrimary}</td>
                                             </tr>
                                         )
                                     })}
@@ -1001,6 +1025,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                     </tr>
                                 </tbody>
                             </Table>
+                            </>}
                         </Col>
                     </Row>
                 </Offcanvas.Body>
@@ -1011,9 +1036,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     </Offcanvas.Header>
                     <Offcanvas.Body>
                         <Row>
+                           
                             <Col sm={12} md={8} lg={8} xl={8} className=" border-end ">
                                 <div className="text-center">
-                                    <img src={apiResponse?.facilityType[(bookingDetails.sportsId)-1]?.url}></img>
+                                    <img src={apiResponse?.facilityType[sportID-1]?.url}></img>
                                     <div>{apiResponse?.facilityType?.title}</div>
                                 </div>
                                 <div className="border rounded-2 ">
@@ -1071,7 +1097,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                             <td>{data.firstName}</td>
                                                             <td>{data.facilityType}</td>
                                                             <td>{data.pricingRule}</td>
-                                                            <td className="fw-bold">${data.cost}</td>
+                                                            <td className="fw-bold">${data.cost ?data.cost:bookingDetails.costPrimary}</td>
                                                         </tr>
                                                     )
                                                 })}

@@ -9,6 +9,9 @@ const NavBar: React.FC<{setIsSignedIn :React.Dispatch<React.SetStateAction<boole
 
     }
  //   console.log(orgDetails,"orgdet")
+ const firstName = localStorage.getItem("first");
+ const lastName = localStorage.getItem("last");
+ const orgName = localStorage.getItem("orgName");
     return (
         <Navbar expand="lg" className="bg-dark">
             <Container fluid>
@@ -16,14 +19,14 @@ const NavBar: React.FC<{setIsSignedIn :React.Dispatch<React.SetStateAction<boole
                 <Navbar.Toggle aria-controls="basic-navbar-nav" className="bg-white" />
                 <Navbar.Collapse id="basic-navbar-nav" className="justify-content-between">
                     <Nav >
-                        <Nav.Link className="text-white fs-4 ms-3">{orgDetails.orgName}</Nav.Link>
+                        <Nav.Link className="text-white fs-4 ms-3">{orgName}</Nav.Link>
 
 
                     </Nav>
 
                     <Dropdown>
                         <Dropdown.Toggle className="bg-transparent border-0" id="dropdown-basic">
-                           {orgDetails.firstName} {orgDetails.lastName}
+                           {firstName} {lastName}
                         </Dropdown.Toggle>
 
                         <Dropdown.Menu>
