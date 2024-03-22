@@ -17,8 +17,6 @@ import { Formik } from "formik";
 import * as yup from "yup";
 import EventColors from "../components/SplitComponents/EventColors";
 import Swal from "sweetalert2";
-import {data1} from "../components/Context/Context.ts"
-import CalendarInputs from "../components/SplitComponents/CalendarInputs.tsx";
 
 
 interface bookingDetails {
@@ -128,8 +126,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 lastName: player.lastName,
                 sameAsPrimary: player.sameAsPrimary === true ? true : false,
                 ...(player.sameAsPrimary === false && {
-                    facility: { id: player?.facilityId.toString() },
-                    pricingRule: { id: player?.pricingRuleId.toString() }
+                    facility: { id: "456" },
+                    pricingRule: { id: "789" }
                 })
             }));
 
@@ -184,7 +182,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         handleCostPricing();
     }
     const handleChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-        console.log(e.target.name, e.target.value,e.target.selectedIndex,"value789");
+        console.log(e.target.name, e.target.value, "value");
         setBookingDetails({ ...bookingDetails, [e.target.name]: e.target.value });
         if (e.target.name === "bookingOccurence") {
             setBookingDetails({ ...bookingDetails, startDate: null, endDate: null, startTime: "", endTime: "", bookingOccurence: e.target.value });
@@ -195,16 +193,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             setStartTime(null);
             setEndTime(null);
         }
-        if (e.target.name === "facilityType") {
-            const selectedFacility = apiResponse.facilityType.find(facility => facility.title === e.target.value);
-            if (selectedFacility) {
-                console.log("Selected facility:", selectedFacility); // Debugging statement
-                const updatedDetails = { ...bookingDetails, facilityType: e.target.value, sportsId: selectedFacility.sport.id };
-                console.log("Updated details:", updatedDetails); // Debugging statement
-                setBookingDetails(updatedDetails);
-            }
-        }
-      
         //  console.log("edited")
     }
     const clearState = () => {
@@ -232,15 +220,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             .then((response) => setApiResponse((prev) => ({ ...prev, facilities: response.data })))
             .catch((err) => console.log(err))
     }
-    const handleCalendarChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
+    const handleCalendarChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>, sportsId: any | null) => {
         const selectedFacilityTitle = e.target.value;
-        console.log(e,"evalue");
-        
         const selectedFacility = apiResponse.facilityType.find((facility) => facility.title === selectedFacilityTitle);
-       
-        
-       const sportsId = selectedFacility ? selectedFacility.sport.id : null;
-        
+        sportsId = selectedFacility ? selectedFacility.sport.id : null;
         setCalendarDetails({
             ...calendarDetails,
             facilityType: selectedFacilityTitle,
@@ -248,8 +231,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         });
         listFacilities(sportsId);
     }
-    console.log(calendarDetails,"caldet");
-    
     const handleDateCalendar = (selectedDate: any) => {
         setCalendarDetails({ ...calendarDetails, date: selectedDate })
     }
@@ -544,8 +525,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     // console.log(startDateTime,endDateTime,"startend");
     const handleFacility =(id) =>
     {
-        console.log(id,"idfs");
-        
         setBookingDetails({...bookingDetails,sportsId:id});
     }
   //  console.log(addPlayersData,"addpalye");
@@ -556,11 +535,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 <EventColors />
             </Row>
             <hr className="my-1" />
-            <data1.Provider value={{bookingDetails,apiResponse}}>   
-                  
-                   {/* <> */}
-                   
-              
             <Row className="p-3 mx-0">
                 <div className="d-md-flex justify-content-between">
                     <Col sm={12} md={2} lg={2} xl={3}>
@@ -569,11 +543,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                             {Array.isArray(apiResponse.facilityType) && apiResponse.facilityType.map((facility: any) => {
                                 const sportsId = facility.sport.id;
                                 return (
-                                    <option key={sportsId} value={facility.title}>{facility.title}</option>
+                                    <option value={facility.title} onClick={(e) => handleCalendarChange(e, sportsId)}>{facility.title}</option>
                                 );
                             })}
                         </Form.Select>
-                        <CalendarInputs handleCalendarChange={handleCalendarChange} />
                     </Col>
                     <Col sm={12} md={2} lg={2} xl={3}>
                         <label>Facilities</label>
@@ -651,9 +624,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 <Col sm={12} xl={6}>
                                     <Form.Label>Facility Type<span className="text-danger ms-1">*</span></Form.Label>
                                     <Form.Select aria-label="Default select example" name="facilityType" value={bookingDetails.facilityType} onChange={handleChange}>
-                                        {apiResponse.facilityType.map((facility) => {               
+                                        {apiResponse.facilityType.map((facility) => {
                                             return (
-                                                <option value={facility.title}>{facility.title}</option>
+                                                <option value={facility.title} onClick={() =>handleFacility(facility.sport.id)} >{facility.title}</option>
                                             );
                                         })}
                                     </Form.Select>
@@ -1172,9 +1145,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     <div className="bg-gainsboro text-end p-2"><Button className="bg-dark" onClick={handleCloseBookPreview}>Back</Button></div>
                 </Offcanvas>
             </Offcanvas>
-            </data1.Provider>
-            {/* </> */}
-          
         </div>
     );
 }

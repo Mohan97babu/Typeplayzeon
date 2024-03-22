@@ -59,7 +59,7 @@ function App() {
     selectedDays: [],
     daysValues:[],
     costPrimary:"",
-    sportsId:"",
+    sportsId:1,
   });
  console.log(bookingDetails,"bookdet");
  

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import logo1 from "../../assets/images/LogoNav.png";
 import { Formik } from "formik";
 import * as yup from "yup";
-import InputField from "../components/CommonInputs/InputField.tsx";
+import InputField from "../components/CommonInputs/InputField";
 import Swal from "sweetalert2";
 
 const Login: React.FC<{setIsSignedIn: React.Dispatch<React.SetStateAction<boolean>>}> = ({setIsSignedIn}) => {

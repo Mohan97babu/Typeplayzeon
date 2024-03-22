@@ -1,0 +1,120 @@
+.App {
+  background-image: url("../images/R.png") !important;
+  width: 100vw !important;
+  height:100vh !important;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+.text-none{
+  text-decoration: none;
+}
+.hover-Sidebar{
+  background-color:gainsboro;
+  color:black !important;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.bg-gainsboro
+{
+  background-color:gainsboro;
+}
+.transparent-bg {
+  background-color: transparent !important;
+  border: none !important;
+}
+::-webkit-scrollbar {
+  width: 4px !important;
+  
+}
+::-webkit-scrollbar-track {
+  background: black;
+  box-shadow: inset 0 0 5px black; 
+  border-radius: 10px;
+}
+ 
+
+::-webkit-scrollbar-thumb {
+  background: red; 
+  border-radius: 10px;
+}
+.fs-7
+{
+  font-size:small;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b30000; 
+}
+.card-img{
+  height:31% !important;
+}
+.hover-border1:hover{
+  border :1px solid red;
+  }
+.h-35{
+  height: 110px;
+  overflow:auto;
+}
+.rbc-month-view,
+.rbc-week-view,
+.rbc-day-view {
+  background-color: red;
+  color:white;
+}
+.rbc-month-view .rbc-header,
+.rbc-week-view .rbc-header,
+.rbc-day-view .rbc-header {
+  background-color: red;
+  color: white;
+  
+}
+/* .rbc-toolbar button {
+  background-color: blue !important;
+  color:green
+} */
+
+
+.rbc-toolbar button.rbc-active {
+ background-color: red !important;
+ color:white !important;
+}
+.rbc-header {
+  /* Add your custom styles for resource headers */
+  background-color: red !important;
+  color: white !important;
+  font-weight: bold;
+}
+input[type="radio"]:checked{
+  background-color: red!important;
+  /* background-color: red !important; */
+  box-shadow: none !important;
+}
+
+
+
