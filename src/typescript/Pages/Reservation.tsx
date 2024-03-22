@@ -556,52 +556,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 <EventColors />
             </Row>
             <hr className="my-1" />
-            <data1.Provider value={{bookingDetails,apiResponse}}>   
-                  
-                   {/* <> */}
-                   
-              
-            <Row className="p-3 mx-0">
-                <div className="d-md-flex justify-content-between">
-                    <Col sm={12} md={2} lg={2} xl={3}>
-                        <div>Facility Type {spinner ? <Spinner animation="border" variant="danger" size="sm" /> : null}</div>
-                        <Form.Select aria-label="Default select example" className="mt-2" value={calendarDetails.facilityType} name="facilityType" onChange={(e) => handleCalendarChange(e)}>
-                            {Array.isArray(apiResponse.facilityType) && apiResponse.facilityType.map((facility: any) => {
-                                const sportsId = facility.sport.id;
-                                return (
-                                    <option key={sportsId} value={facility.title}>{facility.title}</option>
-                                );
-                            })}
-                        </Form.Select>
-                        <CalendarInputs handleCalendarChange={handleCalendarChange} />
-                    </Col>
-                    <Col sm={12} md={2} lg={2} xl={3}>
-                        <label>Facilities</label>
-                        <Form.Select aria-label="Default select example" className="mt-2">
-                            <option value={""}>All Court</option>
-                            {Object.entries(apiResponse.facilities).map(([courtName, courtArray]) => (
-                                courtArray.map((facilityItem: { id: any; name: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined; }, index: any) => {
-                                    facilityItemIds.push(facilityItem.id);
-                                    return (
-                                        <option key={`${courtName}-${index}`} value={facilityItem.name}> {facilityItem.name}</option>
-                                    )
-                                })))}
-                        </Form.Select>
-                    </Col>
-                    <Col sm={12} md={2} lg={2} xl={2} className="mt-2 ">
-                        <label className="mb-2">Date</label>
-                        <DatePicker className="form-control  " onChange={(e: any) => handleDateCalendar(e)} selected={calendarDetails.date} minDate={new Date()} showIcon />
-                    </Col>
-                    <div className="mt-3">
-                        <Col className="mt-3 ">
-                            <div className="mt-3  " >
-                                <Button variant="primary" onClick={handleSearchCalendar}> <Icon icon="ic:baseline-search" height={21} />Search </Button>
-                                <Button variant="danger" className="ms-4" onClick={handleShow}> Add Booking </Button>
-                            </div>
-                        </Col>
-                    </div>
-                </div>
-            </Row>
+            <data1.Provider value={{bookingDetails,apiResponse,calendarDetails,facilityItemIds}}>   {/* <> */}  
+             <CalendarInputs handleCalendarChange={handleCalendarChange} handleDateCalendar={handleDateCalendar} handleSearchCalendar={handleSearchCalendar} handleShow={handleShow} />
             <Row className="p-2 mx-0 w-100">
                 <Calendar
                     localizer={localizer}
@@ -617,18 +573,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     max={CalendarEndTime}
                     resourceIdAccessor="id"
                     resourceTitleAccessor="title"
-                    // resourceStyle={resourceStyle}
-                    // resourceClassName={resourceClassName}
-                    // components={{
-                    //     resourceHeader: CustomResourceHeader
-                    //   }}
-                    // resourcePropGetter={(resource) => ({
-                    //     className: 'my-custom-resource-header', // Additional CSS class for resource headers
-                    //     style: {
-                    //         backgroundColor: "red", // Example: Dynamically set background color based on resource data
-                    //         fontWeight: resource.highlight ? 'bold' : 'normal', // Example: Conditional styling
-                    //     },
-                    // })}
                 />
             </Row>
             <Offcanvas show={show} onHide={handleClose} backdrop="static" placement="end" className="w-75">
@@ -1172,9 +1116,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     <div className="bg-gainsboro text-end p-2"><Button className="bg-dark" onClick={handleCloseBookPreview}>Back</Button></div>
                 </Offcanvas>
             </Offcanvas>
-            </data1.Provider>
-            {/* </> */}
-          
+            </data1.Provider>         
         </div>
     );
 }

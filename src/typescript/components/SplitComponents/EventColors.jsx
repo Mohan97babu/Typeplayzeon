@@ -1,5 +1,5 @@
 import { Icon } from "@iconify/react";
-import {Row,Col } from "react-bootstrap";
+import {Row,Col} from "react-bootstrap";
 
 const EventColors =() =>
 {
