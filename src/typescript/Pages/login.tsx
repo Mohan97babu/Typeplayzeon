@@ -10,7 +10,7 @@ import Swal from "sweetalert2";
 
 const Login: React.FC<{setIsSignedIn: React.Dispatch<React.SetStateAction<boolean>>}> = ({setIsSignedIn}) => {
 
-  const [spinner,setSpinner] =useState(true);
+  const [spinner,setSpinner] =useState(false);
  const tempURL = process.env.REACT_APP_BASEURLTEMP;
 const orgURL = process.env.REACT_APP_BASEURLORG;
 const navigate = useNavigate();
@@ -24,7 +24,8 @@ const navigate = useNavigate();
     .then((response) => {
       console.log(response,"65655")
      localStorage.setItem("AccessToken",response.data.accessToken);
-       setIsSignedIn(true); 
+       setIsSignedIn(true);
+       setSpinner(true); 
        Swal.fire({
         icon: 'success',
         title: 'Login Successful!',
@@ -70,7 +71,7 @@ const navigate = useNavigate();
               <div>
                 <Button variant="danger" className="  w-100 my-3 shadow-3" type="submit">
                   Sign in
-                  {/* <div>{spinner ? <Spinner animation="border" variant="danger" size="sm" /> : null}</div> */}
+                  <div>{spinner ? <Spinner animation="border" variant="danger" size="sm" /> : null}</div>
                 </Button>
                </div>
                 </Form>

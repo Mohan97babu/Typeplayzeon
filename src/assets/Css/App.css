@@ -32,14 +32,6 @@
   color:black !important;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
 .bg-gainsboro
 {
   background-color:gainsboro;
@@ -50,6 +42,7 @@
 }
 ::-webkit-scrollbar {
   width: 4px !important;
+  height:4px;
   
 }
 ::-webkit-scrollbar-track {
@@ -81,12 +74,12 @@
   height: 110px;
   overflow:auto;
 }
-.rbc-month-view,
+/* .rbc-month-view,
 .rbc-week-view,
 .rbc-day-view {
   background-color: red;
   color:white;
-}
+} */
 .rbc-month-view .rbc-header,
 .rbc-week-view .rbc-header,
 .rbc-day-view .rbc-header {

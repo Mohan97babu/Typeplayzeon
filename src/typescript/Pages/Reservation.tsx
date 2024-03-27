@@ -5,7 +5,7 @@ import Select from 'react-select';
 import { BookingType } from "../../utils/Data";
 import { Time, Days, TableAddPlayers, TablePricing } from "../../utils/Data";
 import Moment from "react-moment";
-import moment from "moment";
+//import moment from "moment";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -17,6 +17,7 @@ import { Formik } from "formik";
 import * as yup from "yup";
 import EventColors from "../components/SplitComponents/EventColors";
 import Swal from "sweetalert2";
+import moments from "moment-timezone";
 
 
 interface bookingDetails {
@@ -40,7 +41,7 @@ interface bookingDetails {
     selectedDays: any[];
     costPrimary: string,
     daysValues: any[];
-    sportsId:any;
+    sportsId: any;
 }
 interface calendarDetails {
     facilityType: string;
@@ -56,7 +57,7 @@ interface apiResponse {
     checkFacility: any[];
 }
 
-const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails: React.Dispatch<React.SetStateAction<bookingDetails>> }> = ({ bookingDetails, setBookingDetails,orgDetails }) => {
+const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails: React.Dispatch<React.SetStateAction<bookingDetails>> }> = ({ bookingDetails, setBookingDetails, orgDetails }) => {
     const [show, setShow] = useState(false);
     const [addShow, setAddShow] = useState(false)
     const [bookShow, setBookShow] = useState(false);
@@ -86,7 +87,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         addPricingCheck: "",
         cost: "",
     })
-    console.log(orgDetails,"vsf")
+    console.log(orgDetails, "vsf")
     const [editAddPlayer, setEditAddPlayer] = useState({
         check: false,
         index: "",
@@ -112,10 +113,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const data = addPlayersData.map((player) => ({
         firstName: player.firstName,
         lastName: player.lastName,
-        sameAsPrimary: player.sameAsPrimary === true ? true : false, 
+        sameAsPrimary: player.sameAsPrimary === true ? true : false,
         ...(player.sameAsPrimary === false && {
             facility: { id: player?.facilityId.toString() },
-            pricingRule: { id: player?.pricingRuleId.toString()}
+            pricingRule: { id: player?.pricingRuleId.toString() }
         })
     }));
     //   console.log(data, "playdata");
@@ -131,12 +132,12 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 })
             }));
 
-                reservationPlayers = data
-            
+            reservationPlayers = data
+
         }
     }, [addPlayersData]);
-  
-   
+
+
     const centerId = localStorage.getItem("centerId");
     const schema = yup.object().shape({
         firstName: yup.string().required("firstName is a Required Field"),
@@ -154,11 +155,11 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         sameAsPrimary: yup.boolean(),
         nameDisClose: yup.boolean(),
         cost: yup.string(),
-        facilityId:yup.string(),
+        facilityId: yup.string(),
     })
     const handleAddPlayerOpen = () => { setAddShow(true) }
     const handleAddPlayerClose = () => { setAddShow(false); clearState(); setNameDisclose(false); setEditAddPlayer({ pricingId: "", check: false, index: "" }) }
-    const handleClose = () => { setShow(false); localStorage.removeItem("error") }
+    const handleClose = () => { setShow(false); localStorage.removeItem("error"); resetBookDetails(); }
     const handleShow = () => { setShow(true); };
     const handleOpenBookPreview = () => setBookShow(true)
     const handleCloseBookPreview = () => { setBookShow(false); };
@@ -167,10 +168,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const [errorsMessage, setErrorsMessage] = useState("");
 
     const handleFormikSubmit = (event: any) => {
-        console.log(event,pricingId,"E");
-        
-        
-        setBookingDetails({ ...bookingDetails, firstName: event.firstName, lastName: event.lastName, emailAddress: event.emailAddress, phoneNumber: event.phoneNumber, pricingRuleCheck: event.pricingRule, facilityCheck: event.facility ,pricingRule:pricingId})
+        console.log(event, pricingId, "E");
+
+
+        setBookingDetails({ ...bookingDetails, firstName: event.firstName, lastName: event.lastName, emailAddress: event.emailAddress, phoneNumber: event.phoneNumber, pricingRuleCheck: event.pricingRule, facilityCheck: event.facility, pricingRule: pricingId })
         if (buttonText === 'Save') {
             setButtonText('Edit');
         }
@@ -181,17 +182,28 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         pricingRuleIdsRef.current.push(pricingId)
         handleCostPricing();
     }
+    const resetBookDetails = () => {
+        setBookingDetails({ ...bookingDetails, bookingType: "Player Booking", facilityType: "Tennis Court", bookingOccurence: "Single Booking", frequency: "", startDate: null, endDate: null, startTime: "", endTime: "", firstName: "", lastName: "", emailAddress: "", phoneNumber: "", pricingRule: "", facilities: "", notes: "", facilityCheck: "", pricingRuleCheck: "", selectedDays: [], daysValues: [], costPrimary: "", sportsId: 1 })
+        setAddPlayersData([]);
+        setButtonText('Save');
+        setErrorsMessage("");
+        setApiResponse({ ...apiResponse, checkFacility: [], pricingrule: [] });
+    }
+
     const handleChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-        console.log(e.target.name, e.target.value, "value");
+        console.log(e.target.name, e.target.value, e,e.target.value,e.target?.selectedOptions[0].text,"value");
         setBookingDetails({ ...bookingDetails, [e.target.name]: e.target.value });
         if (e.target.name === "bookingOccurence") {
             setBookingDetails({ ...bookingDetails, startDate: null, endDate: null, startTime: "", endTime: "", bookingOccurence: e.target.value });
             setErrorsMessage("");
-            setApiResponse({...apiResponse,checkFacility:[]});
+            setApiResponse({ ...apiResponse, checkFacility: [], pricingrule: [] });
             setAppearForm(false);
             setButtonText("Save");
             setStartTime(null);
             setEndTime(null);
+        }
+        if(e.target.name === "facilityType"){
+            setBookingDetails({...bookingDetails,sportsId:e.target.value,facilityType:e.target?.selectedOptions[0].text});
         }
         //  console.log("edited")
     }
@@ -248,8 +260,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         listSports();
         fetchEventData();
     }, []);
-    const handleBookFacility = async (type: any) => { 
-        setBookingDetails({ ...bookingDetails, facilities: type.name,facilityCheck:type.id });
+    const handleBookFacility = async (type: any) => {
+        setBookingDetails({ ...bookingDetails, facilities: type.name, facilityCheck: type.id });
         await axios.get(`${tempURL}/api/v1/pricing-rules?centerId=${centerId}&facilityIds=${type?.id}`)
             .then((response) => { setApiResponse({ ...apiResponse, pricingrule: response.data }) })
             .catch(err => console.log(err))
@@ -295,7 +307,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             updatedSelectedDays = bookingDetails.selectedDays.filter(day => day.value !== value);
         } else {
             updatedSelectedDays = [...bookingDetails.selectedDays, fulldayname];
-            updatedDaysValues=[...bookingDetails.daysValues,value]
+            updatedDaysValues = [...bookingDetails.daysValues, value]
         }
         setBookingDetails(prevState => ({
             ...prevState,
@@ -303,7 +315,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             daysValues: updatedDaysValues,
         }));
     };
-   
+
     const renderDaysOfWeek = (startDate, endDate) => {
         const daysBetween = eachDayOfInterval({ start: startDate, end: endDate });
         const renderedDays: any[] = [];
@@ -339,9 +351,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             </div>
         ));
     };
-    let sportID =bookingDetails.sportsId;
+    let sportID = bookingDetails.sportsId;
 
-    
+
     const handleSearchCalendar = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         fetchEventData();
@@ -378,13 +390,33 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
 
     let facilityItemIds = [];
     let title = [];
+    let moments = require('moment-timezone');
+    const [eventsListing, setEventsListing] = useState([])
     const fetchEventData = async () => {
         try {
             const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${currentMoment.format()}&end.lessThanOrEqual=${nextDayMoment.format()}&Id.in=${facilityItemIds}`);
             const responseData = response.data;
             const resources = responseData.myresources;
             const timings = responseData.timings;
+            const timeZone = response.data.timezone.name;
+            console.log(resources, "resou");
+
+
             setTime({ ...time, start: timings.start, end: timings.end })
+
+            const eventList = responseData.events.map((evente) => {
+                return {
+                    id: evente.reservation.id,
+                    title: evente.reservation.title,
+                    // start: moments(evente.start).tz(timeZone)._d,
+                    // end: moments(evente.end).tz(timeZone)._d,
+                    start:new Date(evente.start),
+                    end:new Date(evente.end),
+                    color: evente.bgColor,
+                }
+            })
+            setEventsListing(eventList);
+            //console.log(eventlist,"fullevent");
             if (Array.isArray(resources)) {
                 const eventsWithDynamicTitles: any = resources.map((resource) => {
                     title.push(resource?.title)
@@ -401,14 +433,18 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             console.error('Error fetching event data:', error);
         }
     };
-    const events = [
-        { id: 1, title: 'Event 1', start: new Date(), end: new Date() },
-        { id: 2, title: 'Event 2', start: new Date(), end: new Date() }
-    ];
+    console.log(eventsListing, "listtt");
+
+    // const events = [
+    //     { id: 1, title: 'Event 1', start: new Date(), end: new Date() },
+    //     { id: 2, title: 'Event 2', start: new Date(), end: new Date() }
+    // ];
     // const resources = [
     //     { id :"res1" , title :"first"},
     //     { id : "res2" , title:"second"},
     // ]  
+    // console.log(eventsListing,"evets");
+
     const startTimeMoment = moment(bookingDetails.startTime, 'hh:mm A');
     const startTime24HourFormat = startTimeMoment.format('HH:mm:ss');
     const endTimeMoment = moment(bookingDetails.endTime, 'hh:mm A');
@@ -431,10 +467,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         setAddShow(true);
         console.log("Edit icon clicked");
         handleCostPricing();
-                 
+
     }
-      console.log(bookingDetails.sportsId,"idsf");
-   
+    console.log(bookingDetails.sportsId, "idsf");
+
     const handleCostPricing = () => {
         axios.get(`${tempURL}/api/v1/costByPricingRule?ids=${pricingRuleIdsRef.current}&startTime=${startDateTime}&endTime=${endDateTime}&isMultiple=${bookingDetails.bookingOccurence === "Single Booking" ? false : true}&daysList=${bookingDetails.bookingOccurence === "Single Booking" ? "" : bookingDetails.daysValues}`)
             .then((response) => { setTotalPrice(response.data); })
@@ -464,7 +500,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     CalendarEndTime.setHours(endTimeParts[0], endTimeParts[1], endTimeParts[2], 0);
     const bookId = localStorage.getItem("bookid");
     const bookReservation = {
-       start: startDateTime,
+        start: startDateTime,
         end: endDateTime,
         "reservation": {
             "desc": "Test description",
@@ -481,12 +517,12 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 "facilityId": parseInt(bookingDetails.facilityCheck),
                 "facilityName": bookingDetails.facilityType,
                 "pricingRuleName": bookingDetails.pricingRuleCheck,
-                "pricingRule":parseInt(bookingDetails.pricingRule),
+                "pricingRule": parseInt(bookingDetails.pricingRule),
                 "price": bookingDetails.costPrimary,
                 "bookingSource": "Card",
                 "bookingStatus": "PENDING",
                 "createdAt": "2023-11-29T05:56:44.171333Z",
-                "createdBy": bookId,    
+                "createdBy": bookId,
                 "paymentStatus": "CREATED",
                 "rateplan": "3",
                 "updatedAt": "2023-12-26T10:19:18.785Z",
@@ -494,7 +530,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             }
         },
         "day": [],
-        "isSingleBooking": bookingDetails.bookingOccurence === "Single Booking" ? "Single Booking":"Multiple Booking",
+        "isSingleBooking": bookingDetails.bookingOccurence === "Single Booking" ? "Single Booking" : "Multiple Booking",
         "facilityPricingDTO": {
             "facility": {
                 "id": parseInt(bookingDetails.facilityCheck)
@@ -505,30 +541,64 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         },
         "reservationPlayers": data
     }
-    
+
     //    console.log(bookReservation,addPlayersData,"ffd")
-  //  console.log("Rendering form component");
+    //  console.log("Rendering form component");
     // useEffect(() => {
     //     console.log("Component mounted or updated");
     // }, [editAddPlayer.index, addPlayersData]);
-    const handleBookReservation =()=>{
-        axios.post(`${tempURL}/api/v1/reservations`,bookReservation)
-        .then((response) =>{console.log(response); Swal.fire({
-            icon: 'success',
-            title: 'Booked Successfully',
-          });})
-        .catch((err) => {console.log(err); Swal.fire({
-            icon: 'error',
-            title: 'Booking Failed',
-          });})
+    const handleBookReservation = () => {
+        axios.post(`${tempURL}/api/v1/reservations`, bookReservation)
+            .then((response) => {
+                console.log(response); Swal.fire({
+                    icon: 'success',
+                    title: 'Booked Successfully',
+                });
+            })
+            .catch((err) => {
+                console.log(err); Swal.fire({
+                    icon: 'error',
+                    title: 'Booking Failed',
+                });
+            })
     }
     // console.log(startDateTime,endDateTime,"startend");
-    const handleFacility =(id) =>
-    {
-        setBookingDetails({...bookingDetails,sportsId:id});
+    const handleFacility = (id) => {
+        console.log(id, "idoff");
+
+        setBookingDetails({ ...bookingDetails, sportsId: id });
     }
-  //  console.log(addPlayersData,"addpalye");
-    console.log(bookReservation,"bookrev")
+    //  console.log(addPlayersData,"addpalye");
+    const handleSelectEvent = (event) => {
+        console.log(event, "jiooo");
+
+
+    }
+    const eventStyleGetter = (event, start, end, isSelected) => {
+
+
+        let style = {
+            backgroundColor: event.bgColor,
+            borderRadius: '5px',
+            opacity: 0.8,
+            color: 'white',
+            border: 'none',
+            display: 'block'
+            // Add more styles as needed
+        };
+
+        return {
+            style: style
+        };
+    }
+    const[alterEvent,setAlterEvent] = useState();
+    const onShowMore =(event)=>
+    {
+       console.log(event,"evebh");
+       setAlterEvent(event);
+    }
+
+    console.log(bookingDetails, "bookrev")
     return (
         <div className="bg-white mt-2 rounded-2 ">
             <Row className="p-3 mx-0">
@@ -578,7 +648,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             <Row className="p-2 mx-0 w-100">
                 <Calendar
                     localizer={localizer}
-                    // events={events}
+                    events={ eventsListing}
                     views={{ day: true, week: true, month: true }}
                     startAccessor="start"
                     endAccessor="end"
@@ -590,18 +660,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     max={CalendarEndTime}
                     resourceIdAccessor="id"
                     resourceTitleAccessor="title"
-                    // resourceStyle={resourceStyle}
-                    // resourceClassName={resourceClassName}
-                    // components={{
-                    //     resourceHeader: CustomResourceHeader
-                    //   }}
-                    // resourcePropGetter={(resource) => ({
-                    //     className: 'my-custom-resource-header', // Additional CSS class for resource headers
-                    //     style: {
-                    //         backgroundColor: "red", // Example: Dynamically set background color based on resource data
-                    //         fontWeight: resource.highlight ? 'bold' : 'normal', // Example: Conditional styling
-                    //     },
-                    // })}
+                    onSelectEvent={handleSelectEvent}
+                    eventPropGetter={eventStyleGetter}
+                    onShowMore={onShowMore}
                 />
             </Row>
             <Offcanvas show={show} onHide={handleClose} backdrop="static" placement="end" className="w-75">
@@ -623,10 +684,19 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 </Col>
                                 <Col sm={12} xl={6}>
                                     <Form.Label>Facility Type<span className="text-danger ms-1">*</span></Form.Label>
-                                    <Form.Select aria-label="Default select example" name="facilityType" value={bookingDetails.facilityType} onChange={handleChange}>
+                                    {/* <Form.Select aria-label="Default select example" name="facilityType" value={bookingDetails.facilityType} onChange={handleChange}>
                                         {apiResponse.facilityType.map((facility) => {
                                             return (
                                                 <option value={facility.title} onClick={() =>handleFacility(facility.sport.id)} >{facility.title}</option>
+                                            );
+                                        })}
+                                    </Form.Select> */}
+                                    <Form.Select aria-label="Default select example" name="facilityType" value={bookingDetails.facilityType} onChange={handleChange}>
+                                        {apiResponse.facilityType.map((facility,i) => {
+                                            return (
+                                                <option key={facility.sport.id} value={facility.sport.id} id={`javith${i}`} onClick={() => console.log(facility.sport.id,"idinn")}>
+                                                    {facility.title}
+                                                </option>
                                             );
                                         })}
                                     </Form.Select>
@@ -791,10 +861,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                     )}
                                 </Formik>
                             </Row>
-                           {/* {buttonText === "Edit" &&  */}
-                           <div><Button variant="danger" onClick={handleAddPlayerOpen}>Add Player</Button></div>
-                           {/* } */}
-                           {addPlayersData.length > 0 && <Table responsive bordered hover striped className="mt-2">
+                            {/* {buttonText === "Edit" &&  */}
+                            <div><Button variant="danger" onClick={handleAddPlayerOpen}>Add Player</Button></div>
+                            {/* } */}
+                            {addPlayersData.length > 0 && <Table responsive bordered hover striped className="mt-2">
                                 <thead className="border">
                                     {Array.isArray(TableAddPlayers) && TableAddPlayers.map((head) => {
                                         return (
@@ -812,7 +882,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                 <td>{data.lastName}</td>
                                                 <td>{data.facilityType}</td>
                                                 <td>{data.pricingRule}</td>
-                                                <td>{data.cost ?data.cost:bookingDetails.costPrimary}</td>
+                                                <td>{data.cost ? data.cost : bookingDetails.costPrimary}</td>
                                                 <td><div className="bg-warning w-50 px-2 mx-auto rounded-2 mt-1" onClick={() => handleEdit(index, data)}><Icon icon="uil:edit" /></div><div className="bg-danger w-50 px-2 mx-auto  mt-1 rounded-2" onClick={() => deleteRow(index, data)}><Icon icon="mi:delete" /></div></td>
                                             </tr>
                                         )
@@ -821,7 +891,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                             </Table>}
                             <Offcanvas show={addShow} onHide={handleAddPlayerClose} placement="end">
                                 <Offcanvas.Header closeButton>
-                                    <Offcanvas.Title>{editAddPlayer.check === false ?"Add":"Edit"} Player</Offcanvas.Title>
+                                    <Offcanvas.Title>{editAddPlayer.check === false ? "Add" : "Edit"} Player</Offcanvas.Title>
                                 </Offcanvas.Header>
                                 <Offcanvas.Body>
                                     <Formik
@@ -836,9 +906,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                             nameDisClose: false,
                                             cost: "",
                                             pricingRuleId: "",
-                                            facilityId:"",
+                                            facilityId: "",
                                         }}
-                                      //  enableReinitialize={true}
+                                    //  enableReinitialize={true}
                                     >
                                         {/* {({ initialValues }) => {
                                             console.log("Initial Values:", initialValues);
@@ -846,7 +916,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                         }} */}
                                         {({ handleSubmit, handleChange, values, errors, setFieldValue, touched, initialValues }) => (
                                             <Form onSubmit={handleSubmit}>
-                                              
+
 
                                                 <Form.Check
                                                     inline
@@ -856,7 +926,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                     className="mt-2 "
                                                     checked={!editAddPlayer.check ? values.nameDisClose : addPlayersData[editAddPlayer.index].nameDisClose}
                                                     onClick={(e) => {
-                                                        console.log("Changing field:", e.target.name, "New value:", e.target.value,e.target.checked);
+                                                        console.log("Changing field:", e.target.name, "New value:", e.target.value, e.target.checked);
                                                         setFieldValue('nameDisClose', e.target.checked);
                                                         setFieldValue('firstName', e.target.checked === true ? "Name not disclosed" : "");
                                                         setFieldValue('lastName', e.target.checked === true ? "Name not disclosed" : "");
@@ -868,23 +938,23 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                     <Col>
                                                         <Form.Label className="fw-medium">FirstName</Form.Label>
                                                         <Form.Control type="text" placeholder="Enter firstName"
-                                                          //  value={!editAddPlayer.check ? values.nameDisClose ? "Name not disclosed" : values.firstName : (addPlayersData[editAddPlayer.index]?.firstName || "")}
-                                                          value={values.firstName}
+                                                            //  value={!editAddPlayer.check ? values.nameDisClose ? "Name not disclosed" : values.firstName : (addPlayersData[editAddPlayer.index]?.firstName || "")}
+                                                            value={values.firstName}
                                                             name="firstName"
                                                             onChange={(e) => { console.log("Changing field:", e.target.name, "New value:", e.target.value); setFieldValue(e.target.name, e.target.value) }}
                                                             disabled={values.nameDisClose === true} isInvalid={touched.firstName && !!errors.firstName}
-                                                             />
+                                                        />
                                                         <Form.Control.Feedback type="invalid">{errors.firstName}</Form.Control.Feedback>
                                                     </Col>
                                                     <Col>
                                                         <Form.Label className="fw-medium">LastName</Form.Label>
                                                         <Form.Control type="text" placeholder="Enter lastName"
-                                                          //  value={!editAddPlayer.check ? values.nameDisClose ? "Name not disclosed" : values.lastName : addPlayersData[editAddPlayer.index].lastName}
-                                                          value={values.lastName}
+                                                            //  value={!editAddPlayer.check ? values.nameDisClose ? "Name not disclosed" : values.lastName : addPlayersData[editAddPlayer.index].lastName}
+                                                            value={values.lastName}
                                                             name="lastName"
                                                             onChange={(e) => { console.log("Changing field:", e.target.name, "New value:", e.target.value); setFieldValue("lastName", e.target.value) }}
-                                                            disabled={values.nameDisClose === true} isInvalid={touched.firstName && !!errors.lastName} 
-                                                            />
+                                                            disabled={values.nameDisClose === true} isInvalid={touched.firstName && !!errors.lastName}
+                                                        />
                                                         <Form.Control.Feedback type="invalid">{errors.lastName} </Form.Control.Feedback>
                                                     </Col>
                                                 </Row>
@@ -897,7 +967,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                         setFieldValue('cost', addPlayers.cost);
                                                         console.log("Changing field:", e.target.name, "New value:", e.target.value);
                                                     }}
-                                                    
+
                                                 />
                                                 <Row className="mt-3 d-flex justify-content-between ">
                                                     <Col xs={6} className="">
@@ -907,8 +977,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                                 return (
                                                                     <div key={index}>
                                                                         {type.map((facility: any) => {
-                                                                           
-                                                                            
+
+
                                                                             return (
                                                                                 <Form.Check
                                                                                     type={"radio"}
@@ -917,10 +987,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                                                     name="facilityType"
                                                                                     disabled={values.sameAsPrimary === true}
                                                                                     onClick={() => handleBookFacility(facility)}
-                                                                                    onChange={() => { handleChange({ target: { name: 'facilityType', value: facility?.name } });setFieldValue('facilityId',facility?.id) }}
-                                                                                    checked={values.facilityType === facility?.name}
+                                                                                    onChange={() => { handleChange({ target: { name: 'facilityType', value: facility?.name } }); setFieldValue('facilityId', facility?.id) }}
+                                                                                    checked={values.facilityId === facility?.id}
                                                                                     isInvalid={!!errors.facilityType && touched.facilityType}
-                                                                                   
+
                                                                                 />)
                                                                         })}
                                                                     </div>
@@ -932,7 +1002,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                     <Col xs={6} className="">
                                                         <Form.Label className="px-0 fw-medium">Pricing Rule</Form.Label>
                                                         <div className="h-35 border p-2">
-                                                            <div className="fw-medium">{bookingDetails.facilityCheck}</div>
+                                                            <div className="fw-medium">{values.facilityType}</div>
                                                             {Object.values(apiResponse.pricingrule).map((pricing, index) => {
                                                                 //  console.log(pricing?.pricingRuleId,"ki");
 
@@ -948,7 +1018,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                                             onChange={() => { handleChange({ target: { name: 'pricingRule', value: pricing?.pricingRule?.ruleName } }); setFieldValue("cost", pricing?.pricingRule?.cost); setFieldValue("pricingRuleId", pricing?.pricingRuleId); }}
                                                                             isInvalid={!!errors.pricingRule && touched.pricingRule}
                                                                             checked={values.pricingRule === pricing?.pricingRule?.ruleName}
-                                                                            
+
                                                                         />
                                                                     </div>
                                                                 )
@@ -957,7 +1027,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                         {touched.pricingRule && <span className="text-danger">{errors.pricingRule}</span>}
                                                     </Col>
                                                 </Row>
-                                                <div className="text-center mt-2 "> <Button variant={editAddPlayer.check === false ? "success":"warning"} type="submit" className="w-75" >{editAddPlayer.check === false ?"Add":"Update"}</Button> </div>
+                                                <div className="text-center mt-2 "> <Button variant={editAddPlayer.check === false ? "success" : "warning"} type="submit" className="w-75" >{editAddPlayer.check === false ? "Add" : "Update"}</Button> </div>
                                                 <div className="text-center mt-2"> <Button variant="danger" type="button" className="w-75" onClick={handleAddPlayerClose}>Close</Button> </div>
                                             </Form>
                                         )}
@@ -989,42 +1059,42 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                             <div>Facility Type</div>
                             <div className="fw-bold mt-2">{bookingDetails.facilityType}</div>
                             <hr />
-                           {buttonText ==="Edit" && <> 
-                            <div className="fw-bold">Player's Facility and Pricing Details<span className="bg-danger text-white px-1 rounded-1 ms-1">{addPlayersData.length + 1}</span></div>
-                            <Table responsive bordered hover striped className="mt-2">
-                                <thead>
-                                    {Array.isArray(TablePricing) && TablePricing.map((head) => {
-                                        return (
-                                            <th className="p-2 border">{head.label}</th>
-                                        )
-                                    })}
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>1</td>
-                                        <td>{bookingDetails.firstName}</td>
-                                        <td>{bookingDetails.facilityCheck}</td>
-                                        <td>{bookingDetails.pricingRuleCheck}</td>
-                                        <td className="fw-bold">${bookingDetails.costPrimary}</td>
-                                    </tr>
-                                    {Array.isArray(addPlayersData) && addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined | number) => {
-                                        let serialnumber: any = index + 2;
-                                        return (
-                                            <tr key={index}>
-                                                <td>{serialnumber}</td>
-                                                <td>{data.firstName}</td>
-                                                <td>{data.facilityType}</td>
-                                                <td>{data.pricingRule}</td>
-                                                <td className="fw-bold">${data.cost ?data.cost:bookingDetails.costPrimary}</td>
-                                            </tr>
-                                        )
-                                    })}
-                                    <tr>
-                                        <td colSpan={4}>Total Price</td>
-                                        <td><span className="bg-dark text-white p-1 rounded-2">${totalPrice}</span></td>
-                                    </tr>
-                                </tbody>
-                            </Table>
+                            {buttonText === "Edit" && <>
+                                <div className="fw-bold">Player's Facility and Pricing Details<span className="bg-danger text-white px-1 rounded-1 ms-1">{addPlayersData.length + 1}</span></div>
+                                <Table responsive bordered hover striped className="mt-2">
+                                    <thead>
+                                        {Array.isArray(TablePricing) && TablePricing.map((head) => {
+                                            return (
+                                                <th className="p-2 border">{head.label}</th>
+                                            )
+                                        })}
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>1</td>
+                                            <td>{bookingDetails.firstName}</td>
+                                            <td>{bookingDetails.facilityCheck}</td>
+                                            <td>{bookingDetails.pricingRuleCheck}</td>
+                                            <td className="fw-bold">${bookingDetails.costPrimary}</td>
+                                        </tr>
+                                        {Array.isArray(addPlayersData) && addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined | number) => {
+                                            let serialnumber: any = index + 2;
+                                            return (
+                                                <tr key={index}>
+                                                    <td>{serialnumber}</td>
+                                                    <td>{data.firstName}</td>
+                                                    <td>{data.facilityType}</td>
+                                                    <td>{data.pricingRule}</td>
+                                                    <td className="fw-bold">${data.cost ? data.cost : bookingDetails.costPrimary}</td>
+                                                </tr>
+                                            )
+                                        })}
+                                        <tr>
+                                            <td colSpan={4}>Total Price</td>
+                                            <td><span className="bg-dark text-white p-1 rounded-2">${totalPrice}</span></td>
+                                        </tr>
+                                    </tbody>
+                                </Table>
                             </>}
                         </Col>
                     </Row>
@@ -1036,10 +1106,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     </Offcanvas.Header>
                     <Offcanvas.Body>
                         <Row>
-                           
+
                             <Col sm={12} md={8} lg={8} xl={8} className=" border-end ">
                                 <div className="text-center">
-                                    <img src={apiResponse?.facilityType[sportID-1]?.url}></img>
+                                    <img src={apiResponse?.facilityType[sportID - 1]?.url}></img>
                                     <div>{apiResponse?.facilityType?.title}</div>
                                 </div>
                                 <div className="border rounded-2 ">
@@ -1097,7 +1167,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                             <td>{data.firstName}</td>
                                                             <td>{data.facilityType}</td>
                                                             <td>{data.pricingRule}</td>
-                                                            <td className="fw-bold">${data.cost ?data.cost:bookingDetails.costPrimary}</td>
+                                                            <td className="fw-bold">${data.cost ? data.cost : bookingDetails.costPrimary}</td>
                                                         </tr>
                                                     )
                                                 })}
