@@ -100,7 +100,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         date: new Date(),
         sportsId: ""
     })
-    // console.log(addPlayers.nameDiscloseCheck, "457")
+     console.log(calendarDetails, "457")
     let reservationPlayers;
     const [apiResponse, setApiResponse] = useState<apiResponse>({
         facilityType: [],
@@ -242,6 +242,11 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             sportsId: sportsId
         });
         listFacilities(sportsId);
+    }
+    const handleIds =(e) =>
+    {
+       console.log(e,"eid");
+       
     }
     const handleDateCalendar = (selectedDate: any) => {
         setCalendarDetails({ ...calendarDetails, date: selectedDate })
@@ -567,7 +572,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 });
             })
     }
-    // console.log(startDateTime,endDateTime,"startend");
     const handleFacility = (id) => {
         console.log(id, "idoff");
 
@@ -579,9 +583,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
 
 
     }
-    const eventStyleGetter = (event, start, end, isSelected) => {
-
-
+    const eventStyleGetter = (event) => {
         let style = {
             backgroundColor: event.bgColor,
             borderRadius: '5px',
@@ -589,18 +591,11 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             color: 'white',
             border: 'none',
             display: 'block'
-            // Add more styles as needed
         };
 
         return {
             style: style
         };
-    }
-    const[alterEvent,setAlterEvent] = useState();
-    const onShowMore =(event)=>
-    {
-       console.log(event,"evebh");
-       setAlterEvent(event);
     }
 
     console.log(bookingDetails, "bookrev")
@@ -625,7 +620,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     </Col>
                     <Col sm={12} md={2} lg={2} xl={3}>
                         <label>Facilities</label>
-                        <Form.Select aria-label="Default select example" className="mt-2">
+                        <Form.Select aria-label="Default select example" className="mt-2" value={calendarDetails.facilities} onChange={handleIds}>
                             <option value={""}>All Court</option>
                             {Object.entries(apiResponse.facilities).map(([courtName, courtArray]) => (
                                 courtArray.map((facilityItem: { id: any; name: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined; }, index: any) => {
@@ -667,14 +662,13 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     resourceTitleAccessor="title"
                     onSelectEvent={handleSelectEvent}
                     eventPropGetter={eventStyleGetter}
-                    onShowMore={onShowMore}
                 />
             </Row>
             <Offcanvas show={show} onHide={handleClose} backdrop="static" placement="end" className="w-75">
                 <Offcanvas.Header className="bg-gainsboro" closeButton>
                     <Offcanvas.Title >Booking</Offcanvas.Title>
                 </Offcanvas.Header>
-                <Offcanvas.Body >
+                <Offcanvas.Body>
                     <Row>
                         <Col sm={12} md={12} lg={8} xl={8}>
                             <Row>
