@@ -191,7 +191,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     }
 
     const handleChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-        console.log(e.target.name, e.target.value, e,e.target.value,e.target?.selectedOptions[0].text,"value");
+        console.log(e.target.name, e.target.value, e,e.target.value,e.target?.options.selectedIndex+1,"value");
         setBookingDetails({ ...bookingDetails, [e.target.name]: e.target.value });
         if (e.target.name === "bookingOccurence") {
             setBookingDetails({ ...bookingDetails, startDate: null, endDate: null, startTime: "", endTime: "", bookingOccurence: e.target.value });
@@ -203,7 +203,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             setEndTime(null);
         }
         if(e.target.name === "facilityType"){
-            setBookingDetails({...bookingDetails,sportsId:e.target.value,facilityType:e.target?.selectedOptions[0].text});
+            setBookingDetails({...bookingDetails,sportsId:e.target?.options.selectedIndex+1,facilityType:e.target.value});
         }
         //  console.log("edited")
     }
@@ -398,23 +398,26 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             const responseData = response.data;
             const resources = responseData.myresources;
             const timings = responseData.timings;
-            const timeZone = response.data.timezone.name;
             console.log(resources, "resou");
 
 
             setTime({ ...time, start: timings.start, end: timings.end })
 
             const eventList = responseData.events.map((evente) => {
+                console.log(evente,"evein");
+                
                 return {
-                    id: evente.reservation.id,
-                    title: evente.reservation.title,
-                    // start: moments(evente.start).tz(timeZone)._d,
-                    // end: moments(evente.end).tz(timeZone)._d,
-                    start:new Date(evente.start),
-                    end:new Date(evente.end),
-                    color: evente.bgColor,
+                   //  id: evente.id,
+                     title: evente.reservation.title,
+                     start: moments(evente?.start).tz(response?.data?.timezone?.name).utc()._d,
+                     end: moments(evente?.end).tz(response?.data?.timezone?.name).utc()._d,
+                     resourceId:evente.resourceId,
+                     bgColor:evente.bgColor,
+                    // start:new Date(evente.start),
+                    // end:new Date(evente.end),
+                   // color: evente.bgColor,
                 }
-            })
+            });
             setEventsListing(eventList);
             //console.log(eventlist,"fullevent");
             if (Array.isArray(resources)) {
@@ -454,9 +457,11 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const startDateTime = moment.utc(`${startDate}T${startTime24HourFormat}Z`).add(7, 'hours').format();
     const endDateTime = moment.utc(`${endDate}T${endTime24HourFormat}Z`).add(7, 'hours').format();
     const handleCheckAvialability = () => {
+        //console.log(bookingDetails.sportsId,"hjy");
+        
         axios.get(`${tempURL}/api/v1/facility/getAvailability?centerId.equals=${centerId}&sportId.equals=${bookingDetails.sportsId}&startTime=${startDateTime}&endTime=${endDateTime}&isMultiple=${bookingDetails.bookingOccurence === "Single Booking" ? false : true}&days=${bookingDetails.bookingOccurence === "Single Booking" ? "" : bookingDetails.selectedDays}`)
             .then((response: any) => {
-                if (response?.status === 200) { setAppearForm(true); setApiResponse({ ...apiResponse, checkFacility: response.data }); }
+                if (response?.status === 200) { setAppearForm(true); setApiResponse({ ...apiResponse, checkFacility: response.data }); setErrorsMessage("");}
                 else { setErrorsMessage(response); }
             })
             .catch((err) => console.log(err, "response"))
@@ -568,7 +573,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
 
         setBookingDetails({ ...bookingDetails, sportsId: id });
     }
-    //  console.log(addPlayersData,"addpalye");
+      console.log(addPlayersData,"addpalye");
     const handleSelectEvent = (event) => {
         console.log(event, "jiooo");
 
@@ -648,7 +653,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             <Row className="p-2 mx-0 w-100">
                 <Calendar
                     localizer={localizer}
-                    events={ eventsListing}
+                    events={eventsListing}
                     views={{ day: true, week: true, month: true }}
                     startAccessor="start"
                     endAccessor="end"
@@ -692,9 +697,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                         })}
                                     </Form.Select> */}
                                     <Form.Select aria-label="Default select example" name="facilityType" value={bookingDetails.facilityType} onChange={handleChange}>
-                                        {apiResponse.facilityType.map((facility,i) => {
+                                        {apiResponse.facilityType.map((facility) => {
                                             return (
-                                                <option key={facility.sport.id} value={facility.sport.id} id={`javith${i}`} onClick={() => console.log(facility.sport.id,"idinn")}>
+                                                <option key={facility.sport.id} value={facility.title}>
                                                     {facility.title}
                                                 </option>
                                             );
@@ -902,11 +907,11 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                             lastName: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.lastName ? addPlayersData[editAddPlayer.index].lastName : "",
                                             facilityType: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.facilityType ? addPlayersData[editAddPlayer.index].facilityType : "",
                                             pricingRule: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.pricingRule ? addPlayersData[editAddPlayer.index].pricingRule : "",
-                                            sameAsPrimary: false,
-                                            nameDisClose: false,
-                                            cost: "",
-                                            pricingRuleId: "",
-                                            facilityId: "",
+                                            sameAsPrimary: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.sameAsPrimary ? addPlayersData[editAddPlayer.index].sameAsPrimary : false,
+                                            nameDisClose: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.nameDisClose ? addPlayersData[editAddPlayer.index].nameDisClose   : false,
+                                            cost: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.cost ? addPlayersData[editAddPlayer.index].cost : "",
+                                            pricingRuleId: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.pricingRuleId ? addPlayersData[editAddPlayer.index].pricingRuleId : "",
+                                            facilityId: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.facilityId ? addPlayersData[editAddPlayer.index].facilityId : "",
                                         }}
                                     //  enableReinitialize={true}
                                     >
@@ -924,7 +929,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                     name="nameDisClose"
                                                     type={"checkbox"}
                                                     className="mt-2 "
-                                                    checked={!editAddPlayer.check ? values.nameDisClose : addPlayersData[editAddPlayer.index].nameDisClose}
+                                                    checked={values.nameDisClose}
                                                     onClick={(e) => {
                                                         console.log("Changing field:", e.target.name, "New value:", e.target.value, e.target.checked);
                                                         setFieldValue('nameDisClose', e.target.checked);
@@ -959,7 +964,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                     </Col>
                                                 </Row>
                                                 <Form.Check
-                                                    inline label="Same as Primary" name="sameAsPrimary" type={"checkbox"} className="mt-2" value={!editAddPlayer.check ? values.sameAsPrimary : addPlayersData[editAddPlayer.index].sameAsPrimary}
+                                                    inline label="Same as Primary" name="sameAsPrimary" type={"checkbox"} className="mt-2" value={values.sameAsPrimary}
                                                     onChange={(e) => {
                                                         setFieldValue('sameAsPrimary', e.target.checked);
                                                         setFieldValue('pricingRule', bookingDetails.pricingRuleCheck);
@@ -988,7 +993,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                                                     disabled={values.sameAsPrimary === true}
                                                                                     onClick={() => handleBookFacility(facility)}
                                                                                     onChange={() => { handleChange({ target: { name: 'facilityType', value: facility?.name } }); setFieldValue('facilityId', facility?.id) }}
-                                                                                    checked={values.facilityId === facility?.id}
+                                                                                    checked={values.facilityId === facility?.id }
                                                                                     isInvalid={!!errors.facilityType && touched.facilityType}
 
                                                                                 />)

@@ -34,7 +34,10 @@
 
 .bg-gainsboro
 {
-  background-color:gainsboro;
+  background-color:gainsboro
+}
+.bg-grayCol{
+  background-color: rgba(0, 0, 0, .5);
 }
 .transparent-bg {
   background-color: transparent !important;
@@ -65,7 +68,8 @@
   background: #b30000; 
 }
 .card-img{
-  height:31% !important;
+  height:14vh !important;
+  filter: brightness(50%);
 }
 .hover-border1:hover{
   border :1px solid red;
@@ -77,8 +81,9 @@
 /* .rbc-month-view,
 .rbc-week-view,
 .rbc-day-view {
-  background-color: red;
-  color:white;
+   background-color: red;
+  color:white; 
+  
 } */
 .rbc-month-view .rbc-header,
 .rbc-week-view .rbc-header,
@@ -90,6 +95,14 @@
 /* .rbc-toolbar button {
   background-color: blue !important;
   color:green
+} */
+.card-img2{
+  height:14vh;
+  filter: brightness(90%);
+  
+}
+/* .text-whitedark{
+  color:aliceblue !important;
 } */
 
 
@@ -107,6 +120,9 @@ input[type="radio"]:checked{
   background-color: red!important;
   /* background-color: red !important; */
   box-shadow: none !important;
+}
+.text-color{
+  color:gainsboro;
 }
 
 
