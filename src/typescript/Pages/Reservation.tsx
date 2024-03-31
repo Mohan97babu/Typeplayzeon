@@ -1,4 +1,4 @@
-import { Col, Row, Form, Button, Offcanvas, Table, Spinner, Badge } from "react-bootstrap";
+import { Col, Row, Form, Button, Offcanvas, Table, Spinner, Badge,Alert } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import React, { useState, ChangeEvent, useEffect, useRef } from "react";
 import Select from 'react-select';
@@ -57,7 +57,7 @@ interface apiResponse {
     checkFacility: any[];
 }
 
-const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails: React.Dispatch<React.SetStateAction<bookingDetails>> }> = ({ bookingDetails, setBookingDetails, orgDetails }) => {
+const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails: React.Dispatch<React.SetStateAction<bookingDetails>> }> = ({ bookingDetails, setBookingDetails, orgDetails, spinner, setSpinner }) => {
     const [show, setShow] = useState(false);
     const [addShow, setAddShow] = useState(false)
     const [bookShow, setBookShow] = useState(false);
@@ -67,7 +67,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const [perCost, setPerCost] = useState("");
     const [disable, setDisable] = useState(false);
     const [sportsId, setSportsId] = useState(0);
-    const [spinner, setSpinner] = useState(true);
+    const [showAlert,setShowAlert] = useState(false);
+    //  const [spinner, setSpinner] = useState(true);
+    const [showEvent,setShowEvent] =useState(false)
+    const [selectedEvent,setSelectedEvent] = useState({});
     const [nameDisClose, setNameDisclose] = useState(false)
     const [pricingId, setPricingId] = useState("");
     const [buttonText, setButtonText] = useState('Save')
@@ -98,9 +101,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         facilityType: "",
         facilities: "",
         date: new Date(),
-        sportsId: ""
+        sportsId: "",
+        facilityId: "",
     })
-     console.log(calendarDetails, "457")
+    console.log(calendarDetails, "457")
     let reservationPlayers;
     const [apiResponse, setApiResponse] = useState<apiResponse>({
         facilityType: [],
@@ -158,7 +162,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         facilityId: yup.string(),
     })
     const handleAddPlayerOpen = () => { setAddShow(true) }
-    const handleAddPlayerClose = () => { setAddShow(false); clearState(); setNameDisclose(false); setEditAddPlayer({ pricingId: "", check: false, index: "" }) }
+    const handleAddPlayerClose = () => { setAddShow(false); clearState(); setNameDisclose(false); setEditAddPlayer({ pricingId: "", check: false, index: "" });setShowAlert(false); }
     const handleClose = () => { setShow(false); localStorage.removeItem("error"); resetBookDetails(); }
     const handleShow = () => { setShow(true); };
     const handleOpenBookPreview = () => setBookShow(true)
@@ -191,7 +195,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     }
 
     const handleChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-        console.log(e.target.name, e.target.value, e,e.target.value,e.target?.options.selectedIndex+1,"value");
+        // console.log(e.target.name, e.target.value, e, e.target.value, e.target?.options.selectedIndex + 1, "value");
         setBookingDetails({ ...bookingDetails, [e.target.name]: e.target.value });
         if (e.target.name === "bookingOccurence") {
             setBookingDetails({ ...bookingDetails, startDate: null, endDate: null, startTime: "", endTime: "", bookingOccurence: e.target.value });
@@ -202,8 +206,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             setStartTime(null);
             setEndTime(null);
         }
-        if(e.target.name === "facilityType"){
-            setBookingDetails({...bookingDetails,sportsId:e.target?.options.selectedIndex+1,facilityType:e.target.value});
+        if (e.target.name === "facilityType") {
+            setBookingDetails({ ...bookingDetails, sportsId: e.target?.options.selectedIndex + 1, facilityType: e.target.value });
         }
         //  console.log("edited")
     }
@@ -229,7 +233,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const listFacilities = async (sportsId: any) => {
         setSportsId(sportsId)
         await axios.get(`${tempURL}/api/v1/facilities?sportId.equals=${sportsId}&centerId.equals=${centerId}`)
-            .then((response) => setApiResponse((prev) => ({ ...prev, facilities: response.data })))
+            .then((response) => { setApiResponse((prev) => ({ ...prev, facilities: response.data })); setSpinner({ ...spinner, facilitySpinner: false, sportSpinner: false }); fetchEventData(); })
             .catch((err) => console.log(err))
     }
     const handleCalendarChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>, sportsId: any | null) => {
@@ -243,10 +247,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         });
         listFacilities(sportsId);
     }
-    const handleIds =(e) =>
-    {
-       console.log(e,"eid");
-       
+    const handleIds = (e) => {
+        console.log(e.target.value, e, e.target.selectedOptions[0].outerText, "eid");
+        setCalendarDetails({ ...calendarDetails, facilityId: e.target.value, facilities: e.target.selectedOptions[0].outerText });
+
     }
     const handleDateCalendar = (selectedDate: any) => {
         setCalendarDetails({ ...calendarDetails, date: selectedDate })
@@ -259,7 +263,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     useEffect(() => {
         const listSports = async () => {
             await axios.get(`${tempURL}/api/v1/sport-photos`)
-                .then((response) => { setApiResponse({ ...apiResponse, facilityType: response.data }); setSpinner(false); listFacilities(1) })
+                .then((response) => { setApiResponse({ ...apiResponse, facilityType: response.data }); setSpinner({ ...spinner, sportSpinner: false }); listFacilities(1) })
                 .catch((err) => console.log(err));
         }
         listSports();
@@ -374,6 +378,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         if (!editAddPlayer.check) {
             setAddPlayersData([...addPlayersData, values]);
             pricingRuleIdsRef.current.push(pricingId)
+            setShowAlert(true);
             console.log("Adding new player:", values);
         }
         else {
@@ -395,11 +400,13 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
 
     let facilityItemIds = [];
     let title = [];
+    console.log(facilityItemIds, "ids");
+
     let moments = require('moment-timezone');
     const [eventsListing, setEventsListing] = useState([])
     const fetchEventData = async () => {
         try {
-            const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${currentMoment.format()}&end.lessThanOrEqual=${nextDayMoment.format()}&Id.in=${facilityItemIds}`);
+            const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${currentMoment.format()}&end.lessThanOrEqual=${nextDayMoment.format()}&Id.in=${calendarDetails.facilities === "" ? facilityItemIds : calendarDetails.facilityId}`);
             const responseData = response.data;
             const resources = responseData.myresources;
             const timings = responseData.timings;
@@ -409,18 +416,28 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             setTime({ ...time, start: timings.start, end: timings.end })
 
             const eventList = responseData.events.map((evente) => {
-                console.log(evente,"evein");
-                
+                console.log(evente, "evein");
+
                 return {
-                   //  id: evente.id,
-                     title: evente.reservation.title,
-                     start: moments(evente?.start).tz(response?.data?.timezone?.name).utc()._d,
-                     end: moments(evente?.end).tz(response?.data?.timezone?.name).utc()._d,
-                     resourceId:evente.resourceId,
-                     bgColor:evente.bgColor,
+                    //  id: evente.id,
+                    title: evente.reservation.title,
+                    start: moments(evente?.start).tz(response?.data?.timezone?.name).utc()._d,
+                    end: moments(evente?.end).tz(response?.data?.timezone?.name).utc()._d,
+                    resourceId: evente.resourceId,
+                    bgColor: evente.bgColor,
+                    // firstName:evente.reservation.booking.firstName,
+                    // lastName:evente.reservation.booking.lastName,
+                    startTime:evente.reservation.booking.startTime,
+                    endTime:evente.reservation.booking.endTime,
+                    totalPrice:evente.reservation.booking.total,
+                    rate:evente.reservation.ratePerSession,
+                    revNumber:evente.reservation.booking.reservationNumber,
+                    bookingStatus:evente.reservation.booking.bookingStatus,
+                    facility:evente.reservation.facility.title,
+                    createdAt:evente.reservation.booking.createdAt,
                     // start:new Date(evente.start),
                     // end:new Date(evente.end),
-                   // color: evente.bgColor,
+                    // color: evente.bgColor,
                 }
             });
             setEventsListing(eventList);
@@ -463,11 +480,11 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const endDateTime = moment.utc(`${endDate}T${endTime24HourFormat}Z`).add(7, 'hours').format();
     const handleCheckAvialability = () => {
         //console.log(bookingDetails.sportsId,"hjy");
-        
+        setSpinner({...spinner,checkAvialabilitySpinner:true});
         axios.get(`${tempURL}/api/v1/facility/getAvailability?centerId.equals=${centerId}&sportId.equals=${bookingDetails.sportsId}&startTime=${startDateTime}&endTime=${endDateTime}&isMultiple=${bookingDetails.bookingOccurence === "Single Booking" ? false : true}&days=${bookingDetails.bookingOccurence === "Single Booking" ? "" : bookingDetails.selectedDays}`)
             .then((response: any) => {
-                if (response?.status === 200) { setAppearForm(true); setApiResponse({ ...apiResponse, checkFacility: response.data }); setErrorsMessage("");}
-                else { setErrorsMessage(response); }
+                if (response?.status === 200) { setAppearForm(true); setApiResponse({ ...apiResponse, checkFacility: response.data }); setErrorsMessage("");setSpinner({...spinner,checkAvialabilitySpinner:false}); }
+                else { setErrorsMessage(response); setSpinner({...spinner,checkAvialabilitySpinner:false});} 
             })
             .catch((err) => console.log(err, "response"))
     }
@@ -577,11 +594,14 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
 
         setBookingDetails({ ...bookingDetails, sportsId: id });
     }
-      console.log(addPlayersData,"addpalye");
+    console.log(addPlayersData, "addpalye");
     const handleSelectEvent = (event) => {
         console.log(event, "jiooo");
-
-
+        setSelectedEvent(event);
+        setShowEvent(true);
+    }
+    const handleEventClose =() =>{
+        setShowEvent(false);
     }
     const eventStyleGetter = (event) => {
         let style = {
@@ -598,7 +618,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         };
     }
 
-    console.log(bookingDetails, "bookrev")
+    console.log(bookingDetails,selectedEvent, "bookrev")
+    
+    
     return (
         <div className="bg-white mt-2 rounded-2 ">
             <Row className="p-3 mx-0">
@@ -608,7 +630,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             <Row className="p-3 mx-0">
                 <div className="d-md-flex justify-content-between">
                     <Col sm={12} md={2} lg={2} xl={3}>
-                        <div>Facility Type {spinner ? <Spinner animation="border" variant="danger" size="sm" /> : null}</div>
+                        <div>Facility Type {spinner.sportSpinner ? <Spinner animation="border" variant="danger" size="sm" /> : null}</div>
                         <Form.Select aria-label="Default select example" className="mt-2" value={calendarDetails.facilityType} name="facilityType" onChange={(e) => handleCalendarChange(e)}>
                             {Array.isArray(apiResponse.facilityType) && apiResponse.facilityType.map((facility: any) => {
                                 const sportsId = facility.sport.id;
@@ -619,14 +641,14 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                         </Form.Select>
                     </Col>
                     <Col sm={12} md={2} lg={2} xl={3}>
-                        <label>Facilities</label>
-                        <Form.Select aria-label="Default select example" className="mt-2" value={calendarDetails.facilities} onChange={handleIds}>
+                        <label>Facilities {spinner.facilitySpinner ? <Spinner animation="border" variant="danger" size="sm" /> : null}</label>
+                        <Form.Select aria-label="Default select example" className="mt-2" value={calendarDetails.facilityId} onChange={handleIds}>
                             <option value={""}>All Court</option>
                             {Object.entries(apiResponse.facilities).map(([courtName, courtArray]) => (
                                 courtArray.map((facilityItem: { id: any; name: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined; }, index: any) => {
                                     facilityItemIds.push(facilityItem.id);
                                     return (
-                                        <option key={`${courtName}-${index}`} value={facilityItem.name}> {facilityItem.name}</option>
+                                        <option key={`${courtName}-${index}`} value={facilityItem.id}> {facilityItem.name}</option>
                                     )
                                 })))}
                         </Form.Select>
@@ -663,6 +685,62 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     onSelectEvent={handleSelectEvent}
                     eventPropGetter={eventStyleGetter}
                 />
+                {selectedEvent && 
+                <Offcanvas show={showEvent} onHide={handleEventClose} placement="end" >
+                  <Offcanvas.Header className="bg-gainsboro fw-medium" closeButton>Booking Preview</Offcanvas.Header> 
+                  <Offcanvas.Body>
+                    <Row>
+                        <Col>
+                        <div className="fw-medium text-secondary">Payment method</div>
+                        <div className="fw-bold">Online Payment</div>
+                        </Col>
+                        <Col>
+                        <div  className="fw-medium text-secondary">Rate per session</div>
+                        <div className="fw-bold">${selectedEvent?.rate}</div>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col>
+                        <div  className="fw-medium text-secondary">Start Time</div>
+                        <div className="fw-bold">{moment(selectedEvent?.startTime).format('YYYY-MM-DD h:mm a')}</div>
+                        </Col>
+                        <Col>
+                        <div  className="fw-medium text-secondary">End Time</div>
+                        <div className="fw-bold">{moment(selectedEvent?.endTime).format('YYYY-MM-DD h:mm a')}</div>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col>
+                        <div  className="fw-medium text-secondary">Total Price</div>
+                        <div className="fw-bold">${selectedEvent?.totalPrice}</div>
+                        </Col>
+                        <Col>
+                        <div  className="fw-medium text-secondary">Created at</div>
+                        <div className="fw-bold">{moment(selectedEvent?.createdAt).format('YYYY-MM-DD h:mm a')}</div>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col>
+                        <div  className="fw-medium text-secondary">Reservation number</div>
+                        <div className="fw-bold">{selectedEvent?.revNumber}</div>
+                        </Col>
+                        <Col>
+                        <div  className="fw-medium text-secondary">Booking status</div>
+                        <div className="fw-bold">{selectedEvent?.bookingStatus}</div>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col>
+                        <div  className="fw-medium text-secondary">Facility</div>
+                        <div className="fw-bold">{selectedEvent?.facility}</div>
+                        </Col>
+                        <Col>
+                        </Col>
+                    </Row>
+                 
+                    </Offcanvas.Body> 
+                    
+                </Offcanvas>}
             </Row>
             <Offcanvas show={show} onHide={handleClose} backdrop="static" placement="end" className="w-75">
                 <Offcanvas.Header className="bg-gainsboro" closeButton>
@@ -746,10 +824,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 <div>{renderDaysOfWeek(bookingDetails.startDate, bookingDetails.endDate)} </div>)}
 
                             <div className="mt-5">
-                                <Button variant="danger" className="" onClick={handleCheckAvialability} disabled={bookingDetails.startDate === null || bookingDetails.endDate === null || startTime === null || endTime === null}>Check Availability</Button>
+                                <Button variant="danger" className="" onClick={handleCheckAvialability} disabled={bookingDetails.startDate === null || bookingDetails.endDate === null || startTime === null || endTime === null || spinner.checkAvialabilitySpinner === true}>Check Availability {spinner.checkAvialabilitySpinner ? <Spinner animation="border" variant="light" size="sm" className="ms-3" /> : null}</Button>
                                 <p className="text-danger">{errorsMessage}</p>
                             </div>
-                            {/* {appearForm && <> */}
+                            {appearForm && <>
 
                             <div className="fw-medium">Available Facility</div>
                             {apiResponse?.checkFacility?.map((facilities) => {
@@ -860,9 +938,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                     )}
                                 </Formik>
                             </Row>
-                            {/* {buttonText === "Edit" &&  */}
+                            {buttonText === "Edit" && 
                             <div><Button variant="danger" onClick={handleAddPlayerOpen}>Add Player</Button></div>
-                            {/* } */}
+                            }
                             {addPlayersData.length > 0 && <Table responsive bordered hover striped className="mt-2">
                                 <thead className="border">
                                     {Array.isArray(TableAddPlayers) && TableAddPlayers.map((head) => {
@@ -902,7 +980,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                             facilityType: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.facilityType ? addPlayersData[editAddPlayer.index].facilityType : "",
                                             pricingRule: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.pricingRule ? addPlayersData[editAddPlayer.index].pricingRule : "",
                                             sameAsPrimary: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.sameAsPrimary ? addPlayersData[editAddPlayer.index].sameAsPrimary : false,
-                                            nameDisClose: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.nameDisClose ? addPlayersData[editAddPlayer.index].nameDisClose   : false,
+                                            nameDisClose: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.nameDisClose ? addPlayersData[editAddPlayer.index].nameDisClose : false,
                                             cost: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.cost ? addPlayersData[editAddPlayer.index].cost : "",
                                             pricingRuleId: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.pricingRuleId ? addPlayersData[editAddPlayer.index].pricingRuleId : "",
                                             facilityId: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.facilityId ? addPlayersData[editAddPlayer.index].facilityId : "",
@@ -915,8 +993,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                         }} */}
                                         {({ handleSubmit, handleChange, values, errors, setFieldValue, touched, initialValues }) => (
                                             <Form onSubmit={handleSubmit}>
-
-
                                                 <Form.Check
                                                     inline
                                                     label="Name not disclosed"
@@ -987,7 +1063,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                                                     disabled={values.sameAsPrimary === true}
                                                                                     onClick={() => handleBookFacility(facility)}
                                                                                     onChange={() => { handleChange({ target: { name: 'facilityType', value: facility?.name } }); setFieldValue('facilityId', facility?.id) }}
-                                                                                    checked={values.facilityId === facility?.id }
+                                                                                    checked={values.facilityType === facility?.name}
                                                                                     isInvalid={!!errors.facilityType && touched.facilityType}
 
                                                                                 />)
@@ -1026,6 +1102,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                         {touched.pricingRule && <span className="text-danger">{errors.pricingRule}</span>}
                                                     </Col>
                                                 </Row>
+                                              {showAlert &&  <Alert variant="success"  className="mt-2">
+                                                    Player Added SuccessFully
+                                                </Alert>}
                                                 <div className="text-center mt-2 "> <Button variant={editAddPlayer.check === false ? "success" : "warning"} type="submit" className="w-75" >{editAddPlayer.check === false ? "Add" : "Update"}</Button> </div>
                                                 <div className="text-center mt-2"> <Button variant="danger" type="button" className="w-75" onClick={handleAddPlayerClose}>Close</Button> </div>
                                             </Form>
@@ -1033,7 +1112,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                     </Formik>
                                 </Offcanvas.Body>
                             </Offcanvas>
-                            {/* </>} */}
+                            </>}
                             <Row className="mt-4 mx-1 ">
                                 <Form.Label className="px-0 fw-medium">Notes</Form.Label>
                                 <Form.Control
@@ -1133,7 +1212,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                         </Col>
                                         <Col xs={4}>
                                             <div className="text-secondary">End Date and Time</div>
-                                            {bookingDetails.endDate && <div className="fw-bold"><Moment format="MMMM DD YYYY ">{bookingDetails.endDate}</Moment>{bookingDetails.startTime} </div>}
+                                            {bookingDetails.endDate && <div className="fw-bold"><Moment format="MMMM DD YYYY ">{bookingDetails.endDate}</Moment>{bookingDetails.endTime} </div>}
                                         </Col>
                                         <Col xs={4}>
                                             <div className="text-secondary">Notes</div>

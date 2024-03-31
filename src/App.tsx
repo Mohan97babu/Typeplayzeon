@@ -33,6 +33,14 @@ interface bookingDetails {
   costPrimary:string;
   sportsId:any;
 }
+interface SpinnerState {
+  loginSpinner: boolean;
+  centerSpinner: boolean;
+  calendarSpinner: boolean;
+  facilitySpinner: boolean;
+  sportSpinner: boolean;
+  checkAvialabilitySpinner: boolean;
+}
 function App() {
 
   const [isSignedIn, setIsSignedIn] = useState(localStorage.getItem('isSignedIn') === 'true');
@@ -62,6 +70,14 @@ function App() {
     sportsId:1,
   });
  console.log(bookingDetails,"bookdet");
+ const [spinner,setSpinner] = useState<SpinnerState>({
+   loginSpinner:false,
+   centerSpinner: true,
+   calendarSpinner:true,
+   facilitySpinner:true,
+   sportSpinner:true,
+   checkAvialabilitySpinner:false,
+   })
  
   useEffect(() => {
     localStorage.setItem('isSignedIn', isSignedIn.toString());
@@ -82,10 +98,10 @@ function App() {
           ) : null}
           <Col className={`${isSignedIn && currentPath !== "/" ? "col-md-9 col-lg-10 col-xl-10 px-2 " : "col-12 w-100 vh-100"} bg-gainsboro   `} >
             <Routes>
-              <Route path="/" element={<Login setIsSignedIn={setIsSignedIn} />} />
+              <Route path="/" element={<Login setIsSignedIn={setIsSignedIn} spinner={spinner} setSpinner={setSpinner}/>} />
               <Route element={<PrivateRoutes isSignedIn={isSignedIn} />} >
-                <Route path="/center" element={<Addcenter setOrgDetails={setOrgDetails} />} />
-                <Route path="/reservation" element={<Reservation bookingDetails={bookingDetails} setBookingDetails={setBookingDetails} orgDetails={orgDetails} />} />
+                <Route path="/center" element={<Addcenter setOrgDetails={setOrgDetails} spinner={spinner} setSpinner={setSpinner}/>} />
+                <Route path="/reservation" element={<Reservation bookingDetails={bookingDetails} setBookingDetails={setBookingDetails} orgDetails={orgDetails} spinner={spinner} setSpinner={setSpinner} />} />
               </Route>
               <Route path="*" element={<Pagenotfound />} />
             </Routes>

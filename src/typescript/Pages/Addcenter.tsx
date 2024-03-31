@@ -18,9 +18,9 @@ interface AddCenterProps {
   setOrgDetails: (details: any) => void;
 }
 
-const AddCenter: React.FC<AddCenterProps> = ({ setOrgDetails }) => {
+const AddCenter: React.FC<AddCenterProps> = ({ setOrgDetails,spinner,setSpinner}) => {
   const [centerData, setCenterData] = useState<Center[]>([]);
-  const [spinner,setSpinner] = useState(true);
+//  const [spinner,setSpinner] = useState(true);
   const navigate = useNavigate();
   const orgId = localStorage.getItem("orgId");
   const tempURL = process.env.REACT_APP_BASEURLTEMP;
@@ -71,7 +71,8 @@ useEffect(() => {
       .then(response => {
         setCenterData(response.data);
         console.log(response.data); 
-        setSpinner(false);
+       // setSpinner(false);
+       setSpinner({...spinner,centerSpinner:false});
       })
       .catch(err => console.log(err));
   }
@@ -87,7 +88,7 @@ return (
     <div style={{ backgroundColor: "gainsboro" }}>
       <div className="mt-2 fw-bold">Center</div>
       <hr className="mt-1 ms-2" />
-      {spinner ? <Card style={{ width: '18rem' }}>
+      {spinner.centerSpinner ? <Card style={{ width: '18rem' }}>
         <Card.Body>
           <Placeholder as={Card.Title} animation="glow">
             <Placeholder xs={12} />
