@@ -77,6 +77,7 @@ function App() {
    facilitySpinner:true,
    sportSpinner:true,
    checkAvialabilitySpinner:false,
+   pricingRuleSpinner:false,
    })
  
   useEffect(() => {

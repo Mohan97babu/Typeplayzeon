@@ -269,10 +269,20 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         listSports();
         fetchEventData();
     }, []);
+    // const handleBookFacility = async (type: any) => {
+    //     setBookingDetails({ ...bookingDetails, facilities: type.name, facilityCheck: type.id });
+    //     setSpinner({...spinner,pricingRuleSpinner:true})
+    //     await axios.get(`${tempURL}/api/v1/pricing-rules?centerId=${centerId}&facilityIds=${type?.id}`)
+    //         .then((response) => { setApiResponse({ ...apiResponse, pricingrule: response.data });setSpinner({...spinner,pricingRuleSpinner:false}) })
+    //         .catch(err => console.log(err))
+    // }
     const handleBookFacility = async (type: any) => {
-        setBookingDetails({ ...bookingDetails, facilities: type.name, facilityCheck: type.id });
+        console.log(type,"typedff");
+        
+        setBookingDetails({ ...bookingDetails, facilities: type.title, facilityCheck: type.id });
+        setSpinner({...spinner,pricingRuleSpinner:true})
         await axios.get(`${tempURL}/api/v1/pricing-rules?centerId=${centerId}&facilityIds=${type?.id}`)
-            .then((response) => { setApiResponse({ ...apiResponse, pricingrule: response.data }) })
+            .then((response) => { setApiResponse({ ...apiResponse, pricingrule: response.data });setSpinner({...spinner,pricingRuleSpinner:false}) })
             .catch(err => console.log(err))
     }
     const handleReactSelectChange = (selectedOption: any, actionMeta: any) => {
@@ -619,6 +629,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     }
 
     console.log(bookingDetails,selectedEvent, "bookrev")
+    console.log(apiResponse.facilities,"apifac");
     
     
     return (
@@ -824,7 +835,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 <div>{renderDaysOfWeek(bookingDetails.startDate, bookingDetails.endDate)} </div>)}
 
                             <div className="mt-5">
-                                <Button variant="danger" className="" onClick={handleCheckAvialability} disabled={bookingDetails.startDate === null || bookingDetails.endDate === null || startTime === null || endTime === null || spinner.checkAvialabilitySpinner === true}>Check Availability {spinner.checkAvialabilitySpinner ? <Spinner animation="border" variant="light" size="sm" className="ms-3" /> : null}</Button>
+                                <Button variant="danger" className="" onClick={handleCheckAvialability} disabled={bookingDetails.startDate === null || bookingDetails.endDate === null || startTime === null || endTime === null || spinner.checkAvialabilitySpinner === true}>Check Availability {spinner.checkAvialabilitySpinner ? <Spinner animation="border" variant="light" size="sm" className="ms-1" /> : null}</Button>
                                 <p className="text-danger">{errorsMessage}</p>
                             </div>
                             {appearForm && <>
@@ -881,7 +892,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                 <Col sm={12} lg={6} xl={6} className="">
                                                     <Form.Label className="px-0 fw-medium">Facility</Form.Label>
                                                     <div className="h-35 border p-2" >
-                                                        {Object.values(apiResponse.facilities).map((type: any, index: any) => {
+                                                        {/* {Object.values(apiResponse.facilities).map((type: any, index: any) => {
                                                             return (
                                                                 <div key={index}>
                                                                     {type.map((facilities: any) => {
@@ -900,7 +911,27 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                                     })}
                                                                 </div>
                                                             )
-                                                        })}
+                                                        })} */}
+                                                        {/* {Object.values(apiResponse.facilities).map((type: any, index: any) => {
+                                                            return (
+                                                                <div key={index}> */}
+                                                                    {apiResponse?.checkFacility?.map((facilities: any) => {
+                                                                        return (
+                                                                            <Form.Check
+                                                                                type={"radio"}
+                                                                                label={`${facilities?.title}`}
+                                                                                value={`${facilities?.title}`}
+                                                                                name={"facility"}
+                                                                                onClick={() => handleBookFacility(facilities)}
+                                                                                onChange={() => handleChange({ target: { name: 'facility', value: facilities?.title } })}
+                                                                                defaultChecked={values.facility === `${facilities?.title}`}
+                                                                                isInvalid={!!errors.facility}
+                                                                                disabled={buttonText === 'Edit'}
+                                                                            />)
+                                                                    })}
+                                                                {/* </div>
+                                                            )
+                                                        })} */}
                                                     </div>
                                                     {values.facility === "" && <span className="text-danger" >{errors.facility}</span>}
                                                 </Col>
@@ -908,7 +939,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                     <Form.Label className="px-0 fw-medium">Pricing Rule</Form.Label>
                                                     <div className="h-35 border p-2">
                                                         <div className="fw-medium">{bookingDetails.facilities}</div>
-                                                        {Object.values(apiResponse.pricingrule).map((pricing, index) => {
+                                                        {spinner.checkAvialabilitySpinner ? <Spinner animation="border" variant="danger"   /> : Object.values(apiResponse.pricingrule).map((pricing, index) => {
                                                             //    console.log(pricing?.pricingRuleId,"pricein");
 
                                                             return (
@@ -1188,7 +1219,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                             <Col sm={12} md={8} lg={8} xl={8} className=" border-end ">
                                 <div className="text-center">
                                     <img src={apiResponse?.facilityType[sportID - 1]?.url}></img>
-                                    <div>{apiResponse?.facilityType?.title}</div>
+                                    <div className="fw-medium mb-2">{bookingDetails.facilityType}</div>
                                 </div>
                                 <div className="border rounded-2 ">
                                     <Row className="d-flex justify-content-between p-3">
