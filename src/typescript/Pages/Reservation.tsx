@@ -236,7 +236,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             .then((response) => { setApiResponse((prev) => ({ ...prev, facilities: response.data })); setSpinner({ ...spinner, facilitySpinner: false, sportSpinner: false }); fetchEventData(); })
             .catch((err) => console.log(err))
     }
-    const handleCalendarChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>, sportsId: any | null) => {
+    const handleCalendarChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>, sportsId?: any | null) => {
         const selectedFacilityTitle = e.target.value;
         const selectedFacility = apiResponse.facilityType.find((facility) => facility.title === selectedFacilityTitle);
         sportsId = selectedFacility ? selectedFacility.sport.id : null;
@@ -633,6 +633,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     
     
     return (
+        
         <div className="bg-white mt-2 rounded-2 ">
             <Row className="p-3 mx-0">
                 <EventColors />

@@ -93,7 +93,7 @@ function App() {
         {isSignedIn && currentPath !== "/" ? <NavBar setIsSignedIn={setIsSignedIn} orgDetails={orgDetails} /> : null}
         <div className=' w-100  d-flex  '>
           {isSignedIn && currentPath !== "/" ? (
-            <Col sm={12} md={3} lg={2} xl={2} className='vh-100 p-2 d-none d-sm-none d-md-block'>
+            <Col sm={12} md={3} lg={2} xl={2} className='vh-100 px-0 d-none d-sm-none d-md-block'>
               <Sidebar currentPath={currentPath} />
             </Col>
           ) : null}
@@ -110,7 +110,10 @@ function App() {
         </div>
       </BrowserRouter>
     </Container>
-   //  <Reservation bookingDetails={bookingDetails} setBookingDetails={setBookingDetails} />
+
+       
+     //   <Reservation bookingDetails={bookingDetails} setBookingDetails={setBookingDetails} spinner={spinner} setSpinner={setSpinner}/>
+       
 
   );
 }

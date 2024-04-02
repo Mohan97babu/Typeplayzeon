@@ -13,7 +13,7 @@ const NavBar: React.FC<{setIsSignedIn :React.Dispatch<React.SetStateAction<boole
  const lastName = localStorage.getItem("last");
  const orgName = localStorage.getItem("orgName");
     return (
-        <Navbar expand="lg" className="bg-dark">
+        <Navbar expand="lg" className="bg-dark sticky-top ">
             <Container fluid>
                 <Navbar.Brand><img src={logo} width={205} height={55} alt="..." /></Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" className="bg-white" />
