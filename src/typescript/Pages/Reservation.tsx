@@ -1,6 +1,6 @@
 import { Col, Row, Form, Button, Offcanvas, Table, Spinner, Badge,Alert } from "react-bootstrap";
 import { Icon } from "@iconify/react";
-import React, { useState, ChangeEvent, useEffect, useRef } from "react";
+import React, { useState, ChangeEvent, useEffect, useRef, ReactNode } from "react";
 import Select from 'react-select';
 import { BookingType } from "../../utils/Data";
 import { Time, Days, TableAddPlayers, TablePricing } from "../../utils/Data";
@@ -18,6 +18,7 @@ import * as yup from "yup";
 import EventColors from "../components/SplitComponents/EventColors";
 import Swal from "sweetalert2";
 import moments from "moment-timezone";
+
 
 
 interface bookingDetails {
@@ -48,16 +49,26 @@ interface calendarDetails {
     facilities: string;
     date: Date;
     sportsId: any
+    facilityId:any
 }
 interface apiResponse {
     facilityType: any[];
     facilities: any;
     pricingrule: any[];
     calendarDetails: any[];
-    checkFacility: any[];
+    checkFacility: any;
 }
+interface SpinnerState {
+    loginSpinner: boolean;
+    centerSpinner: boolean;
+    calendarSpinner: boolean;
+    facilitySpinner: boolean;
+    sportSpinner: boolean;
+    checkAvialabilitySpinner: boolean;
+    pricingRuleSpinner:boolean;
+  }
 
-const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails: React.Dispatch<React.SetStateAction<bookingDetails>> }> = ({ bookingDetails, setBookingDetails, orgDetails, spinner, setSpinner }) => {
+const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails: React.Dispatch<React.SetStateAction<bookingDetails>>;spinner:SpinnerState;setSpinner:React.Dispatch<React.SetStateAction<SpinnerState>> }> = ({ bookingDetails, setBookingDetails, orgDetails, spinner, setSpinner }) => {
     const [show, setShow] = useState(false);
     const [addShow, setAddShow] = useState(false)
     const [bookShow, setBookShow] = useState(false);
@@ -70,7 +81,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const [showAlert,setShowAlert] = useState(false);
     //  const [spinner, setSpinner] = useState(true);
     const [showEvent,setShowEvent] =useState(false)
-    const [selectedEvent,setSelectedEvent] = useState({});
+    const [selectedEvent,setSelectedEvent] = useState<any>({});
     const [nameDisClose, setNameDisclose] = useState(false)
     const [pricingId, setPricingId] = useState("");
     const [buttonText, setButtonText] = useState('Save')
@@ -100,7 +111,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const [calendarDetails, setCalendarDetails] = useState<calendarDetails>({
         facilityType: "",
         facilities: "",
-        date: new Date(),
+        date: "" || new Date(),
         sportsId: "",
         facilityId: "",
     })
@@ -144,18 +155,18 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
 
     const centerId = localStorage.getItem("centerId");
     const schema = yup.object().shape({
-        firstName: yup.string().required("firstName is a Required Field"),
-        lastName: yup.string().required("lastName is a Required Field"),
-        emailAddress: yup.string().email().required("emailAddress is a Required Field"),
-        phoneNumber: yup.string().required("phoneNumber is a Required Field"),
-        facility: yup.string().required('Facility selection is required'),
+        firstName: yup.string().required("FirstName is a Required Field"),
+        lastName: yup.string().required("LastName is a Required Field"),
+        emailAddress: yup.string().email().required("EmailAddress is a Required Field"),
+        phoneNumber: yup.string().required("PhoneNumber is a Required Field"),
+        facility: yup.string().required('Facility selection is a required'),
         pricingRule: yup.string().required(),
     })
     const schemae = yup.object().shape({
-        firstName: yup.string().required("FirstName is Required Field"),
-        lastName: yup.string().required("lastName is a Required Field"),
-        facilityType: yup.string().required("Facility selection is Required Field"),
-        pricingRule: yup.string().required("pricingRule is Required Field "),
+        firstName: yup.string().required("FirstName is a Required Field"),
+        lastName: yup.string().required("LastName is a Required Field"),
+        facilityType: yup.string().required("Facility selection is a Required Field"),
+        pricingRule: yup.string().required("PricingRule selection is a Required Field "),
         sameAsPrimary: yup.boolean(),
         nameDisClose: yup.boolean(),
         cost: yup.string(),
@@ -233,7 +244,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const listFacilities = async (sportsId: any) => {
         setSportsId(sportsId)
         await axios.get(`${tempURL}/api/v1/facilities?sportId.equals=${sportsId}&centerId.equals=${centerId}`)
-            .then((response) => { setApiResponse((prev) => ({ ...prev, facilities: response.data })); setSpinner({ ...spinner, facilitySpinner: false, sportSpinner: false }); fetchEventData(); })
+            .then((response) => { setApiResponse((prev) => ({ ...prev, facilities: response.data })); setSpinner({ ...spinner, facilitySpinner: false ,sportSpinner:false}); })
             .catch((err) => console.log(err))
     }
     const handleCalendarChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>, sportsId?: any | null) => {
@@ -376,10 +387,12 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const handleSearchCalendar = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         fetchEventData();
+        setSpinner({...spinner,calendarSpinner:true});
     }
     const moment = require('moment');
     const currentMoment = moment.utc();
     const nextDayMoment = currentMoment.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute');
+
     const localizer = momentLocalizer(moment)
 
     const handlePlayerSubmit = (values) => {
@@ -411,20 +424,27 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     let facilityItemIds = [];
     let title = [];
     console.log(facilityItemIds, "ids");
-
+     
     let moments = require('moment-timezone');
     const [eventsListing, setEventsListing] = useState([])
+    const modifyDate = calendarDetails.date;
+    const dateOf1 = moment(modifyDate).utc();
+    console.log(dateOf1.format(),"datty");
+    const dateOf = dateOf1.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute').utc();
+    console.log(dateOf.format(),"datecal");
+    
+   // currentMoment.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute')
     const fetchEventData = async () => {
         try {
-            const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${currentMoment.format()}&end.lessThanOrEqual=${nextDayMoment.format()}&Id.in=${calendarDetails.facilities === "" ? facilityItemIds : calendarDetails.facilityId}`);
+            const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${dateOf1.format()}&end.lessThanOrEqual=${dateOf.format()}&Id.in=${calendarDetails.facilities === "" ? facilityItemIds : calendarDetails.facilityId}`);
             const responseData = response.data;
             const resources = responseData.myresources;
             const timings = responseData.timings;
             console.log(resources, "resou");
-
+             
 
             setTime({ ...time, start: timings.start, end: timings.end })
-
+            setSpinner({...spinner,calendarSpinner:false});
             const eventList = responseData.events.map((evente) => {
                 console.log(evente, "evein");
 
@@ -493,21 +513,18 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         setSpinner({...spinner,checkAvialabilitySpinner:true});
         axios.get(`${tempURL}/api/v1/facility/getAvailability?centerId.equals=${centerId}&sportId.equals=${bookingDetails.sportsId}&startTime=${startDateTime}&endTime=${endDateTime}&isMultiple=${bookingDetails.bookingOccurence === "Single Booking" ? false : true}&days=${bookingDetails.bookingOccurence === "Single Booking" ? "" : bookingDetails.selectedDays}`)
             .then((response: any) => {
-                if (response?.status === 200) { setAppearForm(true); setApiResponse({ ...apiResponse, checkFacility: response.data }); setErrorsMessage("");setSpinner({...spinner,checkAvialabilitySpinner:false}); }
+                if (response?.status === 200) { setAppearForm(true); setApiResponse({ ...apiResponse, checkFacility: response.data }); setErrorsMessage(""); setSpinner({...spinner,checkAvialabilitySpinner:false}); }
                 else { setErrorsMessage(response); setSpinner({...spinner,checkAvialabilitySpinner:false});} 
             })
             .catch((err) => console.log(err, "response"))
     }
     const handleEdit = (index, data) => {
-
         setEditAddPlayer({ pricingId: data.pricingRuleId, check: true, index: index });
         setAddShow(true);
         console.log("Edit icon clicked");
         handleCostPricing();
-
     }
     console.log(bookingDetails.sportsId, "idsf");
-
     const handleCostPricing = () => {
         axios.get(`${tempURL}/api/v1/costByPricingRule?ids=${pricingRuleIdsRef.current}&startTime=${startDateTime}&endTime=${endDateTime}&isMultiple=${bookingDetails.bookingOccurence === "Single Booking" ? false : true}&daysList=${bookingDetails.bookingOccurence === "Single Booking" ? "" : bookingDetails.daysValues}`)
             .then((response) => { setTotalPrice(response.data); })
@@ -629,7 +646,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     }
 
     console.log(bookingDetails,selectedEvent, "bookrev")
-    console.log(apiResponse.facilities,"apifac");
+    console.log(spinner,"apifac");
     
     
     return (
@@ -680,7 +697,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 </div>
             </Row>
             <Row className="p-2 mx-0 w-100">
-                <Calendar
+               {spinner.calendarSpinner ?<div className="d-flex justify-content-center align-items-center mt-3"> <Spinner animation="border" variant="danger"   /> </div> : <Calendar
                     localizer={localizer}
                     events={eventsListing}
                     views={{ day: true, week: true, month: true }}
@@ -696,7 +713,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     resourceTitleAccessor="title"
                     onSelectEvent={handleSelectEvent}
                     eventPropGetter={eventStyleGetter}
-                />
+                />}
                 {selectedEvent && 
                 <Offcanvas show={showEvent} onHide={handleEventClose} placement="end" >
                   <Offcanvas.Header className="bg-gainsboro fw-medium" closeButton>Booking Preview</Offcanvas.Header> 
@@ -982,7 +999,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                     })}
                                 </thead>
                                 <tbody>
-                                    {Array.isArray(addPlayersData) && addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; lastName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined) => {
+                                    {Array.isArray(addPlayersData) && addPlayersData.map((data: {pricingRule: ReactNode; facilityType: ReactNode; firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; lastName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: number) => {
                                         // console.log(addPlayersData, "addpalydata");
                                         return (
                                             <tr key={index}>
@@ -1023,7 +1040,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                             console.log("Initial Values:", initialValues);
                                             // Rest of your Formik code
                                         }} */}
-                                        {({ handleSubmit, handleChange, values, errors, setFieldValue, touched, initialValues }) => (
+                                        {({ handleSubmit, handleChange, values, errors, setFieldValue, touched }) => (
                                             <Form onSubmit={handleSubmit}>
                                                 <Form.Check
                                                     inline
@@ -1032,7 +1049,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                     type={"checkbox"}
                                                     className="mt-2 "
                                                     checked={values.nameDisClose}
-                                                    onClick={(e) => {
+                                                    onClick={(e:any) => {
                                                         console.log("Changing field:", e.target.name, "New value:", e.target.value, e.target.checked);
                                                         setFieldValue('nameDisClose', e.target.checked);
                                                         setFieldValue('firstName', e.target.checked === true ? "Name not disclosed" : "");
@@ -1084,8 +1101,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                                 return (
                                                                     <div key={index}>
                                                                         {type.map((facility: any) => {
-
-
                                                                             return (
                                                                                 <Form.Check
                                                                                     type={"radio"}
@@ -1135,7 +1150,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                     </Col>
                                                 </Row>
                                               {showAlert &&  <Alert variant="success"  className="mt-2">
-                                                    Player Added SuccessFully
+                                                    Player {editAddPlayer.check === true ? "Updated":"Added"} SuccessFully
                                                 </Alert>}
                                                 <div className="text-center mt-2 "> <Button variant={editAddPlayer.check === false ? "success" : "warning"} type="submit" className="w-75" >{editAddPlayer.check === false ? "Add" : "Update"}</Button> </div>
                                                 <div className="text-center mt-2"> <Button variant="danger" type="button" className="w-75" onClick={handleAddPlayerClose}>Close</Button> </div>
@@ -1187,7 +1202,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                             <td>{bookingDetails.pricingRuleCheck}</td>
                                             <td className="fw-bold">${bookingDetails.costPrimary}</td>
                                         </tr>
-                                        {Array.isArray(addPlayersData) && addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined | number) => {
+                                        {Array.isArray(addPlayersData) && addPlayersData.map((data: { pricingRule: ReactNode;facilityType: ReactNode; firstName: ReactNode | string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: number) => {
                                             let serialnumber: any = index + 2;
                                             return (
                                                 <tr key={index}>
@@ -1269,7 +1284,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                     <td>{bookingDetails.pricingRuleCheck}</td>
                                                     <td className="fw-bold">${bookingDetails.costPrimary}</td>
                                                 </tr>
-                                                {Array.isArray(addPlayersData) && addPlayersData.map((data: { firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined | number) => {
+                                                {Array.isArray(addPlayersData) && addPlayersData.map((data: { pricingRule: ReactNode; facilityType: ReactNode; firstName: ReactNode | string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: number) => {
                                                     const serialNo = index + 2;
                                                     return (
                                                         <tr key={index}>

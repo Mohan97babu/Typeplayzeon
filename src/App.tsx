@@ -40,6 +40,7 @@ interface SpinnerState {
   facilitySpinner: boolean;
   sportSpinner: boolean;
   checkAvialabilitySpinner: boolean;
+  pricingRuleSpinner:boolean;
 }
 function App() {
 

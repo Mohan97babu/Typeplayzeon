@@ -7,8 +7,16 @@ import { Formik } from "formik";
 import * as yup from "yup";
 import InputField from "../components/CommonInputs/InputField";
 import Swal from "sweetalert2";
-
-const Login: React.FC<{setIsSignedIn: React.Dispatch<React.SetStateAction<boolean>> }> = ({setIsSignedIn,spinner,setSpinner}) => {
+interface SpinnerState {
+  loginSpinner: boolean;
+  centerSpinner: boolean;
+  calendarSpinner: boolean;
+  facilitySpinner: boolean;
+  sportSpinner: boolean;
+  checkAvialabilitySpinner: boolean;
+  pricingRuleSpinner:boolean;
+}
+const Login: React.FC<{setIsSignedIn: React.Dispatch<React.SetStateAction<boolean>>; spinner: SpinnerState; setSpinner: React.Dispatch<React.SetStateAction<SpinnerState>>; }> = ({setIsSignedIn,spinner,setSpinner}) => {
 
  // const [spinner,setSpinner] =useState(false);
  const tempURL = process.env.REACT_APP_BASEURLTEMP;
