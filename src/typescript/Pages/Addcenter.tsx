@@ -111,13 +111,13 @@ return (
       // </Card> 
       <div className='d-flex gap-2 '>
       <Card className='bg-white p-2'style={{ width: '18rem' }}>
-        <SkeletonTheme baseColor="gainsboro" highlightColor="white"><p> <Skeleton count={1} width={270} height={262}/> </p> </SkeletonTheme> 
+        <SkeletonTheme baseColor="gainsboro" highlightColor="white"><p> <Skeleton count={1}  height={262}/> </p> </SkeletonTheme> 
       </Card>
       <Card className='bg-white p-2'style={{ width: '18rem' }}>
-        <SkeletonTheme baseColor="gainsboro" highlightColor="white"><p> <Skeleton count={1} width={270} height={262}/> </p> </SkeletonTheme> 
+        <SkeletonTheme baseColor="gainsboro" highlightColor="white"><p> <Skeleton count={1}  height={262}/> </p> </SkeletonTheme> 
       </Card>
       <Card className='bg-white p-2'style={{ width: '18rem' }}>
-        <SkeletonTheme baseColor="gainsboro" highlightColor="white"><p> <Skeleton count={1} width={270} height={262}/> </p> </SkeletonTheme> 
+        <SkeletonTheme baseColor="gainsboro" highlightColor="white"><p> <Skeleton count={1}  height={262}/> </p> </SkeletonTheme> 
       </Card> 
       </div>
       :<Card className="bg-white p-3 rounded-3">

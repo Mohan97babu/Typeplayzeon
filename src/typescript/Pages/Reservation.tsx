@@ -430,12 +430,13 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const [eventsListing, setEventsListing] = useState([])
     const modifyDate = calendarDetails.date;
     const dateOf1 = moment(modifyDate).utc();
-    console.log(dateOf1.format(), "datty");
+ //   console.log(dateOf1.format(), "datty");
     const dateOf = dateOf1.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute').utc();
-    console.log(dateOf.format(), "datecal");
+  //  console.log(dateOf.format(), "datecal");
 
     // currentMoment.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute')
-    const fetchEventData = async () => {
+    const fetchEventData = async (date) => {
+  
         try {
             const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${dateOf1.format()}&end.lessThanOrEqual=${dateOf.format()}&Id.in=${calendarDetails.facilities === "" ? facilityItemIds : calendarDetails.facilityId}`);
             const responseData = response.data;
@@ -646,22 +647,29 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             style: style
         };
     }
-
+    const handleNavigation =(date) =>{
+       // console.log(date,view,"viewdate");
+       fetchEventData(date);
+        
+    }
+    const [view,setView] = useState('day');
+    const handleViewChange =(view) =>{
+        console.log(view,"viewdATE");
+       setView(view);
+    }
     console.log(bookingDetails, selectedEvent, "bookrev")
     console.log(spinner, "apifac");
 
-
+console.log(calendarDetails.date,"dYYYYYYYYYY");
     return (
-
         <div className="bg-white mt-2 rounded-2 ">
             <Row className="p-3 mx-0">
                 <EventColors />
-            </Row>
-         
+            </Row>      
             <hr className="my-1" />
             <Row className="p-3 mx-0">
-                <div className="d-md-flex justify-content-between">
-                    <Col sm={12} md={2} lg={2} xl={3}>
+                <div className="d-lg-flex justify-content-between">
+                    <Col sm={12} md={12} lg={2} xl={3}>
                         <div>Facility Type {spinner.sportSpinner ? <Spinner animation="border" variant="danger" size="sm" /> : null}</div>
                         <Form.Select aria-label="Default select example" className="mt-2" value={calendarDetails.facilityType} name="facilityType" onChange={(e) => handleCalendarChange(e)}>
                             {Array.isArray(apiResponse.facilityType) && apiResponse.facilityType.map((facility: any) => {
@@ -672,7 +680,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                             })}
                         </Form.Select>
                     </Col>
-                    <Col sm={12} md={2} lg={2} xl={3}>
+                    <Col sm={12} md={12} lg={2} xl={3}>
                         <label>Facilities {spinner.facilitySpinner ? <Spinner animation="border" variant="danger" size="sm" /> : null}</label>
                         <Form.Select aria-label="Default select example" className="mt-2" value={calendarDetails.facilityId} onChange={handleIds}>
                             <option value={""}>All Court</option>
@@ -685,7 +693,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 })))}
                         </Form.Select>
                     </Col>
-                    <Col sm={12} md={2} lg={2} xl={2} className="mt-1 ">
+                    <Col sm={12} md={12} lg={2} xl={2} className="mt-1 d-flex flex-column">
                         <label className="mb-2">Date</label>
                         <DatePicker className="form-control  " onChange={(e: any) => handleDateCalendar(e)} selected={calendarDetails.date} minDate={new Date()} showIcon />
                     </Col>
@@ -718,6 +726,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     resourceTitleAccessor="title"
                     onSelectEvent={handleSelectEvent}
                     eventPropGetter={eventStyleGetter}
+                    onNavigate={handleNavigation}
+                    onView={handleViewChange}
                 />                 
                     </div>
                 }
