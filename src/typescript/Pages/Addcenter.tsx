@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card,Placeholder } from "react-bootstrap";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Skeleton,{ SkeletonTheme } from 'react-loading-skeleton';
 
 interface Center {
   id: string;
@@ -96,17 +97,30 @@ return (
     <div style={{ backgroundColor: "gainsboro" }}>
       <div className="mt-2 fw-bold">Center</div>
       <hr className="mt-1 ms-2" />
-      {spinner.centerSpinner ? <Card style={{ width: '18rem' }}>
-        <Card.Body>
-          <Placeholder as={Card.Title} animation="glow">
-            <Placeholder xs={12} />
-          </Placeholder>
-          <Placeholder as={Card.Text} animation="glow">
-            <Placeholder xs={12} /> <Placeholder xs={4} /> <Placeholder xs={4} />{' '}
-            <Placeholder xs={6} /> <Placeholder xs={8} />
-          </Placeholder>
-        </Card.Body>
-      </Card> :<Card className="bg-white p-3 rounded-3">
+      {spinner.centerSpinner ? 
+      // <Card style={{ width: '18rem' }}>
+      //   <Card.Body>
+      //     <Placeholder as={Card.Title} animation="glow">
+      //       <Placeholder xs={12} />
+      //     </Placeholder>
+      //     <Placeholder as={Card.Text} animation="glow">
+      //       <Placeholder xs={12} /> <Placeholder xs={4} /> <Placeholder xs={4} />{' '}
+      //       <Placeholder xs={6} /> <Placeholder xs={8} />
+      //     </Placeholder>
+      //   </Card.Body>
+      // </Card> 
+      <div className='d-flex gap-2 '>
+      <Card className='bg-white p-2'style={{ width: '18rem' }}>
+        <SkeletonTheme baseColor="gainsboro" highlightColor="white"><p> <Skeleton count={1} width={270} height={262}/> </p> </SkeletonTheme> 
+      </Card>
+      <Card className='bg-white p-2'style={{ width: '18rem' }}>
+        <SkeletonTheme baseColor="gainsboro" highlightColor="white"><p> <Skeleton count={1} width={270} height={262}/> </p> </SkeletonTheme> 
+      </Card>
+      <Card className='bg-white p-2'style={{ width: '18rem' }}>
+        <SkeletonTheme baseColor="gainsboro" highlightColor="white"><p> <Skeleton count={1} width={270} height={262}/> </p> </SkeletonTheme> 
+      </Card> 
+      </div>
+      :<Card className="bg-white p-3 rounded-3">
         <div className="row">
           {centerData?.map((center:any) => (
             <div key={center.id} style={{ width: '15rem', height: "258px" }} className="m-xl-3 mx-auto my-2 col-sm-6 col-md-6 col-lg-3 col-xl-3 border rounded-2 px-0 " onClick={() => handleReservation(center.id)}>

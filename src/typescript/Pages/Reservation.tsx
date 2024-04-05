@@ -1,4 +1,4 @@
-import { Col, Row, Form, Button, Offcanvas, Table, Spinner, Badge,Alert } from "react-bootstrap";
+import { Col, Row, Form, Button, Offcanvas, Table, Spinner, Badge, Alert } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import React, { useState, ChangeEvent, useEffect, useRef, ReactNode } from "react";
 import Select from 'react-select';
@@ -18,7 +18,8 @@ import * as yup from "yup";
 import EventColors from "../components/SplitComponents/EventColors";
 import Swal from "sweetalert2";
 import moments from "moment-timezone";
-
+import Skeleton,{ SkeletonTheme} from "react-loading-skeleton";
+import 'react-loading-skeleton/dist/skeleton.css'
 
 
 interface bookingDetails {
@@ -49,7 +50,7 @@ interface calendarDetails {
     facilities: string;
     date: Date;
     sportsId: any
-    facilityId:any
+    facilityId: any
 }
 interface apiResponse {
     facilityType: any[];
@@ -65,10 +66,10 @@ interface SpinnerState {
     facilitySpinner: boolean;
     sportSpinner: boolean;
     checkAvialabilitySpinner: boolean;
-    pricingRuleSpinner:boolean;
-  }
+    pricingRuleSpinner: boolean;
+}
 
-const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails: React.Dispatch<React.SetStateAction<bookingDetails>>;spinner:SpinnerState;setSpinner:React.Dispatch<React.SetStateAction<SpinnerState>> }> = ({ bookingDetails, setBookingDetails, orgDetails, spinner, setSpinner }) => {
+const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails: React.Dispatch<React.SetStateAction<bookingDetails>>; spinner: SpinnerState; setSpinner: React.Dispatch<React.SetStateAction<SpinnerState>> }> = ({ bookingDetails, setBookingDetails, orgDetails, spinner, setSpinner }) => {
     const [show, setShow] = useState(false);
     const [addShow, setAddShow] = useState(false)
     const [bookShow, setBookShow] = useState(false);
@@ -78,10 +79,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const [perCost, setPerCost] = useState("");
     const [disable, setDisable] = useState(false);
     const [sportsId, setSportsId] = useState(0);
-    const [showAlert,setShowAlert] = useState(false);
+    const [showAlert, setShowAlert] = useState(false);
     //  const [spinner, setSpinner] = useState(true);
-    const [showEvent,setShowEvent] =useState(false)
-    const [selectedEvent,setSelectedEvent] = useState<any>({});
+    const [showEvent, setShowEvent] = useState(false)
+    const [selectedEvent, setSelectedEvent] = useState<any>({});
     const [nameDisClose, setNameDisclose] = useState(false)
     const [pricingId, setPricingId] = useState("");
     const [buttonText, setButtonText] = useState('Save')
@@ -173,7 +174,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         facilityId: yup.string(),
     })
     const handleAddPlayerOpen = () => { setAddShow(true) }
-    const handleAddPlayerClose = () => { setAddShow(false); clearState(); setNameDisclose(false); setEditAddPlayer({ pricingId: "", check: false, index: "" });setShowAlert(false); }
+    const handleAddPlayerClose = () => { setAddShow(false); clearState(); setNameDisclose(false); setEditAddPlayer({ pricingId: "", check: false, index: "" }); setShowAlert(false); }
     const handleClose = () => { setShow(false); localStorage.removeItem("error"); resetBookDetails(); }
     const handleShow = () => { setShow(true); };
     const handleOpenBookPreview = () => setBookShow(true)
@@ -244,7 +245,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const listFacilities = async (sportsId: any) => {
         setSportsId(sportsId)
         await axios.get(`${tempURL}/api/v1/facilities?sportId.equals=${sportsId}&centerId.equals=${centerId}`)
-            .then((response) => { setApiResponse((prev) => ({ ...prev, facilities: response.data })); setSpinner({ ...spinner, facilitySpinner: false ,sportSpinner:false}); })
+            .then((response) => { setApiResponse((prev) => ({ ...prev, facilities: response.data })); setSpinner({ ...spinner, facilitySpinner: false, sportSpinner: false }); })
             .catch((err) => console.log(err))
     }
     const handleCalendarChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>, sportsId?: any | null) => {
@@ -288,12 +289,12 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     //         .catch(err => console.log(err))
     // }
     const handleBookFacility = async (type: any) => {
-        console.log(type,"typedff");
-        
+        console.log(type, "typedff");
+
         setBookingDetails({ ...bookingDetails, facilities: type.title, facilityCheck: type.id });
-        setSpinner({...spinner,pricingRuleSpinner:true})
+        setSpinner({ ...spinner, pricingRuleSpinner: true })
         await axios.get(`${tempURL}/api/v1/pricing-rules?centerId=${centerId}&facilityIds=${type?.id}`)
-            .then((response) => { setApiResponse({ ...apiResponse, pricingrule: response.data });setSpinner({...spinner,pricingRuleSpinner:false}) })
+            .then((response) => { setApiResponse({ ...apiResponse, pricingrule: response.data }); setSpinner({ ...spinner, pricingRuleSpinner: false }) })
             .catch(err => console.log(err))
     }
     const handleReactSelectChange = (selectedOption: any, actionMeta: any) => {
@@ -387,7 +388,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const handleSearchCalendar = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         fetchEventData();
-        setSpinner({...spinner,calendarSpinner:true});
+        setSpinner({ ...spinner, calendarSpinner: true });
     }
     const moment = require('moment');
     const currentMoment = moment.utc();
@@ -424,16 +425,16 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     let facilityItemIds = [];
     let title = [];
     console.log(facilityItemIds, "ids");
-     
+
     let moments = require('moment-timezone');
     const [eventsListing, setEventsListing] = useState([])
     const modifyDate = calendarDetails.date;
     const dateOf1 = moment(modifyDate).utc();
-    console.log(dateOf1.format(),"datty");
+    console.log(dateOf1.format(), "datty");
     const dateOf = dateOf1.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute').utc();
-    console.log(dateOf.format(),"datecal");
-    
-   // currentMoment.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute')
+    console.log(dateOf.format(), "datecal");
+
+    // currentMoment.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute')
     const fetchEventData = async () => {
         try {
             const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${dateOf1.format()}&end.lessThanOrEqual=${dateOf.format()}&Id.in=${calendarDetails.facilities === "" ? facilityItemIds : calendarDetails.facilityId}`);
@@ -441,10 +442,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             const resources = responseData.myresources;
             const timings = responseData.timings;
             console.log(resources, "resou");
-             
+
 
             setTime({ ...time, start: timings.start, end: timings.end })
-            setSpinner({...spinner,calendarSpinner:false});
+            setSpinner({ ...spinner, calendarSpinner: false });
             const eventList = responseData.events.map((evente) => {
                 console.log(evente, "evein");
 
@@ -457,17 +458,18 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     bgColor: evente.bgColor,
                     // firstName:evente.reservation.booking.firstName,
                     // lastName:evente.reservation.booking.lastName,
-                    startTime:evente.reservation.booking.startTime,
-                    endTime:evente.reservation.booking.endTime,
-                    totalPrice:evente.reservation.booking.total,
-                    rate:evente.reservation.ratePerSession,
-                    revNumber:evente.reservation.booking.reservationNumber,
-                    bookingStatus:evente.reservation.booking.bookingStatus,
-                    facility:evente.reservation.facility.title,
-                    createdAt:evente.reservation.booking.createdAt,
+                    startTime: evente.reservation.booking.startTime,
+                    endTime: evente.reservation.booking.endTime,
+                    totalPrice: evente.reservation.booking.total,
+                    rate: evente.reservation.ratePerSession,
+                    revNumber: evente.reservation.booking.reservationNumber,
+                    bookingStatus: evente.reservation.booking.bookingStatus,
+                    facility: evente.reservation.facility.title,
+                    createdAt: evente.reservation.booking.createdAt,
                     // start:new Date(evente.start),
                     // end:new Date(evente.end),
                     // color: evente.bgColor,
+                    bookingSource:evente.reservation.booking.bookingSource,
                 }
             });
             setEventsListing(eventList);
@@ -510,11 +512,11 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const endDateTime = moment.utc(`${endDate}T${endTime24HourFormat}Z`).add(7, 'hours').format();
     const handleCheckAvialability = () => {
         //console.log(bookingDetails.sportsId,"hjy");
-        setSpinner({...spinner,checkAvialabilitySpinner:true});
+        setSpinner({ ...spinner, checkAvialabilitySpinner: true });
         axios.get(`${tempURL}/api/v1/facility/getAvailability?centerId.equals=${centerId}&sportId.equals=${bookingDetails.sportsId}&startTime=${startDateTime}&endTime=${endDateTime}&isMultiple=${bookingDetails.bookingOccurence === "Single Booking" ? false : true}&days=${bookingDetails.bookingOccurence === "Single Booking" ? "" : bookingDetails.selectedDays}`)
             .then((response: any) => {
-                if (response?.status === 200) { setAppearForm(true); setApiResponse({ ...apiResponse, checkFacility: response.data }); setErrorsMessage(""); setSpinner({...spinner,checkAvialabilitySpinner:false}); }
-                else { setErrorsMessage(response); setSpinner({...spinner,checkAvialabilitySpinner:false});} 
+                if (response?.status === 200) { setAppearForm(true); setApiResponse({ ...apiResponse, checkFacility: response.data }); setErrorsMessage(""); setSpinner({ ...spinner, checkAvialabilitySpinner: false }); }
+                else { setErrorsMessage(response); setSpinner({ ...spinner, checkAvialabilitySpinner: false }); }
             })
             .catch((err) => console.log(err, "response"))
     }
@@ -627,7 +629,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         setSelectedEvent(event);
         setShowEvent(true);
     }
-    const handleEventClose =() =>{
+    const handleEventClose = () => {
         setShowEvent(false);
     }
     const eventStyleGetter = (event) => {
@@ -645,16 +647,17 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         };
     }
 
-    console.log(bookingDetails,selectedEvent, "bookrev")
-    console.log(spinner,"apifac");
-    
-    
+    console.log(bookingDetails, selectedEvent, "bookrev")
+    console.log(spinner, "apifac");
+
+
     return (
-        
+
         <div className="bg-white mt-2 rounded-2 ">
             <Row className="p-3 mx-0">
                 <EventColors />
             </Row>
+         
             <hr className="my-1" />
             <Row className="p-3 mx-0">
                 <div className="d-md-flex justify-content-between">
@@ -682,13 +685,13 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                 })))}
                         </Form.Select>
                     </Col>
-                    <Col sm={12} md={2} lg={2} xl={2} className="mt-2 ">
+                    <Col sm={12} md={2} lg={2} xl={2} className="mt-1 ">
                         <label className="mb-2">Date</label>
                         <DatePicker className="form-control  " onChange={(e: any) => handleDateCalendar(e)} selected={calendarDetails.date} minDate={new Date()} showIcon />
                     </Col>
                     <div className="mt-3">
                         <Col className="mt-3 ">
-                            <div className="mt-3  " >
+                            <div className="mt-3 d-flex justify-content-around " >
                                 <Button variant="primary" onClick={handleSearchCalendar}> <Icon icon="ic:baseline-search" height={21} />Search </Button>
                                 <Button variant="danger" className="ms-4" onClick={handleShow}> Add Booking </Button>
                             </div>
@@ -697,7 +700,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 </div>
             </Row>
             <Row className="p-2 mx-0 w-100">
-               {spinner.calendarSpinner ?<div className="d-flex justify-content-center align-items-center mt-3"> <Spinner animation="border" variant="danger"   /> </div> : <Calendar
+                {spinner.calendarSpinner ? <SkeletonTheme baseColor="gainsboro" highlightColor="white"><p> <Skeleton count={1} height={500} /> </p> </SkeletonTheme> 
+                : <div className="calendar-container">                   
+                    <Calendar
                     localizer={localizer}
                     events={eventsListing}
                     views={{ day: true, week: true, month: true }}
@@ -713,63 +718,65 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     resourceTitleAccessor="title"
                     onSelectEvent={handleSelectEvent}
                     eventPropGetter={eventStyleGetter}
-                />}
-                {selectedEvent && 
-                <Offcanvas show={showEvent} onHide={handleEventClose} placement="end" >
-                  <Offcanvas.Header className="bg-gainsboro fw-medium" closeButton>Booking Preview</Offcanvas.Header> 
-                  <Offcanvas.Body>
-                    <Row>
-                        <Col>
-                        <div className="fw-medium text-secondary">Payment method</div>
-                        <div className="fw-bold">Online Payment</div>
-                        </Col>
-                        <Col>
-                        <div  className="fw-medium text-secondary">Rate per session</div>
-                        <div className="fw-bold">${selectedEvent?.rate}</div>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col>
-                        <div  className="fw-medium text-secondary">Start Time</div>
-                        <div className="fw-bold">{moment(selectedEvent?.startTime).format('YYYY-MM-DD h:mm a')}</div>
-                        </Col>
-                        <Col>
-                        <div  className="fw-medium text-secondary">End Time</div>
-                        <div className="fw-bold">{moment(selectedEvent?.endTime).format('YYYY-MM-DD h:mm a')}</div>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col>
-                        <div  className="fw-medium text-secondary">Total Price</div>
-                        <div className="fw-bold">${selectedEvent?.totalPrice}</div>
-                        </Col>
-                        <Col>
-                        <div  className="fw-medium text-secondary">Created at</div>
-                        <div className="fw-bold">{moment(selectedEvent?.createdAt).format('YYYY-MM-DD h:mm a')}</div>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col>
-                        <div  className="fw-medium text-secondary">Reservation number</div>
-                        <div className="fw-bold">{selectedEvent?.revNumber}</div>
-                        </Col>
-                        <Col>
-                        <div  className="fw-medium text-secondary">Booking status</div>
-                        <div className="fw-bold">{selectedEvent?.bookingStatus}</div>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col>
-                        <div  className="fw-medium text-secondary">Facility</div>
-                        <div className="fw-bold">{selectedEvent?.facility}</div>
-                        </Col>
-                        <Col>
-                        </Col>
-                    </Row>
-                 
-                    </Offcanvas.Body> 
-                    
-                </Offcanvas>}
+                />                 
+                    </div>
+                }
+                {selectedEvent &&
+                    <Offcanvas show={showEvent} onHide={handleEventClose} placement="end" >
+                        <Offcanvas.Header className="bg-gainsboro fw-medium" closeButton>Booking Preview</Offcanvas.Header>
+                        <Offcanvas.Body>
+                            <Row>
+                                <Col>
+                                    <div className="fw-medium text-secondary">Payment method</div>
+                                    <div className="fw-bold text-capitalize">{selectedEvent.bookingSource}</div>
+                                </Col>
+                                <Col>
+                                    <div className="fw-medium text-secondary">Rate per session</div>
+                                    <div className="fw-bold">${selectedEvent?.rate}</div>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col>
+                                    <div className="fw-medium text-secondary">Start Time</div>
+                                    <div className="fw-bold">{moment(selectedEvent?.startTime).format('YYYY-MM-DD h:mm a')}</div>
+                                </Col>
+                                <Col>
+                                    <div className="fw-medium text-secondary">End Time</div>
+                                    <div className="fw-bold">{moment(selectedEvent?.endTime).format('YYYY-MM-DD h:mm a')}</div>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col>
+                                    <div className="fw-medium text-secondary">Total Price</div>
+                                    <div className="fw-bold">${selectedEvent?.totalPrice}</div>
+                                </Col>
+                                <Col>
+                                    <div className="fw-medium text-secondary">Created at</div>
+                                    <div className="fw-bold">{moment(selectedEvent?.createdAt).format('YYYY-MM-DD h:mm a')}</div>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col>
+                                    <div className="fw-medium text-secondary">Reservation number</div>
+                                    <div className="fw-bold">{selectedEvent?.revNumber}</div>
+                                </Col>
+                                <Col>
+                                    <div className="fw-medium text-secondary">Booking status</div>
+                                    <div className="fw-bold">{selectedEvent?.bookingStatus}</div>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col>
+                                    <div className="fw-medium text-secondary">Facility</div>
+                                    <div className="fw-bold">{selectedEvent?.facility}</div>
+                                </Col>
+                                <Col>
+                                </Col>
+                            </Row>
+
+                        </Offcanvas.Body>
+
+                    </Offcanvas>}
             </Row>
             <Offcanvas show={show} onHide={handleClose} backdrop="static" placement="end" className="w-75">
                 <Offcanvas.Header className="bg-gainsboro" closeButton>
@@ -858,59 +865,59 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                             </div>
                             {appearForm && <>
 
-                            <div className="fw-medium">Available Facility</div>
-                            {apiResponse?.checkFacility?.map((facilities) => {
-                                return (
-                                    <Badge bg="success" className="mt-2 me-2 ">{facilities?.title}</Badge>
-                                )
-                            })}
-                            {apiResponse?.checkFacility?.message ? <p>{apiResponse?.checkFacility?.message}</p> : null}
-                            <Row >
-                                <div className="my-2 fw-medium">Player Details</div>
-                                <Formik
-                                    validationSchema={schema}
-                                    onSubmit={handleFormikSubmit}
-                                    initialValues={{
-                                        firstName: "",
-                                        lastName: "",
-                                        emailAddress: "",
-                                        phoneNumber: "",
-                                        pricingRule: "",
-                                        facility: "",
-                                        cost: "",
-                                    }}
-                                >
-                                    {({ handleSubmit, handleChange, values, errors, isValid }) => (
-                                        <Form onSubmit={handleSubmit}>
-                                            <Row className="mt-2">
-                                                <Col sm={12} lg={6} xl={6}>
-                                                    <Form.Label>First Name</Form.Label>
-                                                    <Form.Control type="text" placeholder="Enter First Name" className="mt-1" name="firstName" value={values.firstName} onChange={handleChange} isInvalid={!!errors.firstName} disabled={buttonText === 'Edit'} />
-                                                    <Form.Control.Feedback type={"invalid"} >{errors.firstName}</Form.Control.Feedback>
-                                                </Col>
-                                                <Col sm={12} lg={6} xl={6}>
-                                                    <Form.Label>Last Name</Form.Label>
-                                                    <Form.Control type="text" placeholder="Enter Last Name" className="mt-1" name="lastName" value={values.lastName} onChange={handleChange} isInvalid={!!errors.lastName} disabled={buttonText === 'Edit'} />
-                                                    {errors.lastName && <Form.Control.Feedback type={"invalid"} >{errors.lastName}</Form.Control.Feedback>}
-                                                </Col>
-                                            </Row>
-                                            <Row className="mt-2">
-                                                <Col sm={12} lg={6} xl={6}>
-                                                    <Form.Label>Phone Number</Form.Label>
-                                                    <Form.Control type="number" placeholder="Enter Phone Number" className="mt-1" name="phoneNumber" value={values.phoneNumber} onChange={handleChange} isInvalid={!!errors.phoneNumber} disabled={buttonText === 'Edit'} />
-                                                    {errors.phoneNumber && <Form.Control.Feedback type={"invalid"} >{errors.phoneNumber}</Form.Control.Feedback>}
-                                                </Col>
-                                                <Col sm={12} lg={6} xl={6}>
-                                                    <Form.Label>Email address</Form.Label>
-                                                    <Form.Control type="text" placeholder="Enter Email address" className="mt-1" name="emailAddress" value={values.emailAddress} onChange={handleChange} isInvalid={!!errors.emailAddress} disabled={buttonText === 'Edit'} />
-                                                    <Form.Control.Feedback type={"invalid"} >{errors.emailAddress}</Form.Control.Feedback>
-                                                </Col>
-                                            </Row>
-                                            <Row className="mt-3 d-flex justify-content-between ">
-                                                <Col sm={12} lg={6} xl={6} className="">
-                                                    <Form.Label className="px-0 fw-medium">Facility</Form.Label>
-                                                    <div className="h-35 border p-2" >
-                                                        {/* {Object.values(apiResponse.facilities).map((type: any, index: any) => {
+                                <div className="fw-medium">Available Facility</div>
+                                {apiResponse?.checkFacility?.map((facilities) => {
+                                    return (
+                                        <Badge bg="success" className="mt-2 me-2 ">{facilities?.title}</Badge>
+                                    )
+                                })}
+                                {apiResponse?.checkFacility?.message ? <p>{apiResponse?.checkFacility?.message}</p> : null}
+                                <Row >
+                                    <div className="my-2 fw-medium">Player Details</div>
+                                    <Formik
+                                        validationSchema={schema}
+                                        onSubmit={handleFormikSubmit}
+                                        initialValues={{
+                                            firstName: "",
+                                            lastName: "",
+                                            emailAddress: "",
+                                            phoneNumber: "",
+                                            pricingRule: "",
+                                            facility: "",
+                                            cost: "",
+                                        }}
+                                    >
+                                        {({ handleSubmit, handleChange, values, errors, isValid }) => (
+                                            <Form onSubmit={handleSubmit}>
+                                                <Row className="mt-2">
+                                                    <Col sm={12} lg={6} xl={6}>
+                                                        <Form.Label>First Name</Form.Label>
+                                                        <Form.Control type="text" placeholder="Enter First Name" className="mt-1" name="firstName" value={values.firstName} onChange={handleChange} isInvalid={!!errors.firstName} disabled={buttonText === 'Edit'} />
+                                                        <Form.Control.Feedback type={"invalid"} >{errors.firstName}</Form.Control.Feedback>
+                                                    </Col>
+                                                    <Col sm={12} lg={6} xl={6}>
+                                                        <Form.Label>Last Name</Form.Label>
+                                                        <Form.Control type="text" placeholder="Enter Last Name" className="mt-1" name="lastName" value={values.lastName} onChange={handleChange} isInvalid={!!errors.lastName} disabled={buttonText === 'Edit'} />
+                                                        {errors.lastName && <Form.Control.Feedback type={"invalid"} >{errors.lastName}</Form.Control.Feedback>}
+                                                    </Col>
+                                                </Row>
+                                                <Row className="mt-2">
+                                                    <Col sm={12} lg={6} xl={6}>
+                                                        <Form.Label>Phone Number</Form.Label>
+                                                        <Form.Control type="number" placeholder="Enter Phone Number" className="mt-1" name="phoneNumber" value={values.phoneNumber} onChange={handleChange} isInvalid={!!errors.phoneNumber} disabled={buttonText === 'Edit'} />
+                                                        {errors.phoneNumber && <Form.Control.Feedback type={"invalid"} >{errors.phoneNumber}</Form.Control.Feedback>}
+                                                    </Col>
+                                                    <Col sm={12} lg={6} xl={6}>
+                                                        <Form.Label>Email address</Form.Label>
+                                                        <Form.Control type="text" placeholder="Enter Email address" className="mt-1" name="emailAddress" value={values.emailAddress} onChange={handleChange} isInvalid={!!errors.emailAddress} disabled={buttonText === 'Edit'} />
+                                                        <Form.Control.Feedback type={"invalid"} >{errors.emailAddress}</Form.Control.Feedback>
+                                                    </Col>
+                                                </Row>
+                                                <Row className="mt-3 d-flex justify-content-between ">
+                                                    <Col sm={12} lg={6} xl={6} className="">
+                                                        <Form.Label className="px-0 fw-medium">Facility</Form.Label>
+                                                        <div className="h-35 border p-2" >
+                                                            {/* {Object.values(apiResponse.facilities).map((type: any, index: any) => {
                                                             return (
                                                                 <div key={index}>
                                                                     {type.map((facilities: any) => {
@@ -930,235 +937,235 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                                 </div>
                                                             )
                                                         })} */}
-                                                        {/* {Object.values(apiResponse.facilities).map((type: any, index: any) => {
+                                                            {/* {Object.values(apiResponse.facilities).map((type: any, index: any) => {
                                                             return (
                                                                 <div key={index}> */}
-                                                                    {apiResponse?.checkFacility?.map((facilities: any) => {
-                                                                        return (
-                                                                            <Form.Check
-                                                                                type={"radio"}
-                                                                                label={`${facilities?.title}`}
-                                                                                value={`${facilities?.title}`}
-                                                                                name={"facility"}
-                                                                                onClick={() => handleBookFacility(facilities)}
-                                                                                onChange={() => handleChange({ target: { name: 'facility', value: facilities?.title } })}
-                                                                                defaultChecked={values.facility === `${facilities?.title}`}
-                                                                                isInvalid={!!errors.facility}
-                                                                                disabled={buttonText === 'Edit'}
-                                                                            />)
-                                                                    })}
-                                                                {/* </div>
-                                                            )
-                                                        })} */}
-                                                    </div>
-                                                    {values.facility === "" && <span className="text-danger" >{errors.facility}</span>}
-                                                </Col>
-                                                <Col sm={12} lg={6} xl={6} className="">
-                                                    <Form.Label className="px-0 fw-medium">Pricing Rule</Form.Label>
-                                                    <div className="h-35 border p-2">
-                                                        <div className="fw-medium">{bookingDetails.facilities}</div>
-                                                        {spinner.checkAvialabilitySpinner ? <Spinner animation="border" variant="danger"   /> : Object.values(apiResponse.pricingrule).map((pricing, index) => {
-                                                            //    console.log(pricing?.pricingRuleId,"pricein");
-
-                                                            return (
-                                                                <div key={index}>
+                                                            {apiResponse?.checkFacility?.map((facilities: any) => {
+                                                                return (
                                                                     <Form.Check
                                                                         type={"radio"}
-                                                                        label={`${pricing?.pricingRule?.ruleName}`}
-                                                                        value={`${pricing?.pricingRule?.ruleName}`}
-                                                                        name={"pricingRule"}
-                                                                        onChange={() => handleChange({ target: { name: 'pricingRule', value: pricing?.pricingRule?.ruleName } })}
-                                                                        defaultChecked={values.pricingRule === `${pricing?.pricingRule?.ruleName}`}
-                                                                        isInvalid={!!errors.pricingRule}
-                                                                        onClick={() => handleBookingCost(pricing)}
+                                                                        label={`${facilities?.title}`}
+                                                                        value={`${facilities?.title}`}
+                                                                        name={"facility"}
+                                                                        onClick={() => handleBookFacility(facilities)}
+                                                                        onChange={() => handleChange({ target: { name: 'facility', value: facilities?.title } })}
+                                                                        defaultChecked={values.facility === `${facilities?.title}`}
+                                                                        isInvalid={!!errors.facility}
                                                                         disabled={buttonText === 'Edit'}
-                                                                    />
-                                                                </div>
-                                                            )
-                                                        })}
-                                                    </div>
-                                                    <span className="text-danger">{errors.pricingRule}</span>
-                                                </Col>
-                                            </Row>
-                                            <div className="text-end">
-                                                <Button variant={buttonText === 'Edit' ? "warning" : "success"} type="submit" className="mt-2 ">{buttonText}</Button>
-                                            </div>
-                                        </Form>
-                                    )}
-                                </Formik>
-                            </Row>
-                            {buttonText === "Edit" && 
-                            <div><Button variant="danger" onClick={handleAddPlayerOpen}>Add Player</Button></div>
-                            }
-                            {addPlayersData.length > 0 && <Table responsive bordered hover striped className="mt-2">
-                                <thead className="border">
-                                    {Array.isArray(TableAddPlayers) && TableAddPlayers.map((head) => {
-                                        return (
-                                            <th className="border p-2">{head.label}</th>
-                                        )
-                                    })}
-                                </thead>
-                                <tbody>
-                                    {Array.isArray(addPlayersData) && addPlayersData.map((data: {pricingRule: ReactNode; facilityType: ReactNode; firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; lastName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: number) => {
-                                        // console.log(addPlayersData, "addpalydata");
-                                        return (
-                                            <tr key={index}>
-                                                <td>{index + 1}</td>
-                                                <td>{data.firstName}</td>
-                                                <td>{data.lastName}</td>
-                                                <td>{data.facilityType}</td>
-                                                <td>{data.pricingRule}</td>
-                                                <td>{data.cost ? data.cost : bookingDetails.costPrimary}</td>
-                                                <td><div className="bg-warning w-50 px-2 mx-auto rounded-2 mt-1" onClick={() => handleEdit(index, data)}><Icon icon="uil:edit" /></div><div className="bg-danger w-50 px-2 mx-auto  mt-1 rounded-2" onClick={() => deleteRow(index, data)}><Icon icon="mi:delete" /></div></td>
-                                            </tr>
-                                        )
-                                    })}
-                                </tbody>
-                            </Table>}
-                            <Offcanvas show={addShow} onHide={handleAddPlayerClose} placement="end">
-                                <Offcanvas.Header closeButton>
-                                    <Offcanvas.Title>{editAddPlayer.check === false ? "Add" : "Edit"} Player</Offcanvas.Title>
-                                </Offcanvas.Header>
-                                <Offcanvas.Body>
-                                    <Formik
-                                        validationSchema={schemae}
-                                        onSubmit={handlePlayerSubmit}
-                                        initialValues={{
-                                            firstName: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.firstName ? addPlayersData[editAddPlayer.index].firstName : "",
-                                            lastName: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.lastName ? addPlayersData[editAddPlayer.index].lastName : "",
-                                            facilityType: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.facilityType ? addPlayersData[editAddPlayer.index].facilityType : "",
-                                            pricingRule: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.pricingRule ? addPlayersData[editAddPlayer.index].pricingRule : "",
-                                            sameAsPrimary: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.sameAsPrimary ? addPlayersData[editAddPlayer.index].sameAsPrimary : false,
-                                            nameDisClose: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.nameDisClose ? addPlayersData[editAddPlayer.index].nameDisClose : false,
-                                            cost: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.cost ? addPlayersData[editAddPlayer.index].cost : "",
-                                            pricingRuleId: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.pricingRuleId ? addPlayersData[editAddPlayer.index].pricingRuleId : "",
-                                            facilityId: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.facilityId ? addPlayersData[editAddPlayer.index].facilityId : "",
-                                        }}
-                                    //  enableReinitialize={true}
-                                    >
-                                        {/* {({ initialValues }) => {
-                                            console.log("Initial Values:", initialValues);
-                                            // Rest of your Formik code
-                                        }} */}
-                                        {({ handleSubmit, handleChange, values, errors, setFieldValue, touched }) => (
-                                            <Form onSubmit={handleSubmit}>
-                                                <Form.Check
-                                                    inline
-                                                    label="Name not disclosed"
-                                                    name="nameDisClose"
-                                                    type={"checkbox"}
-                                                    className="mt-2 "
-                                                    checked={values.nameDisClose}
-                                                    onClick={(e:any) => {
-                                                        console.log("Changing field:", e.target.name, "New value:", e.target.value, e.target.checked);
-                                                        setFieldValue('nameDisClose', e.target.checked);
-                                                        setFieldValue('firstName', e.target.checked === true ? "Name not disclosed" : "");
-                                                        setFieldValue('lastName', e.target.checked === true ? "Name not disclosed" : "");
-                                                        setFieldValue('touched.firstName', e.target.checked);
-                                                        setFieldValue('touched.lastName', e.target.checked);
-                                                    }}
-                                                />
-                                                <Row className="mt-2">
-                                                    <Col>
-                                                        <Form.Label className="fw-medium">FirstName</Form.Label>
-                                                        <Form.Control type="text" placeholder="Enter firstName"
-                                                            //  value={!editAddPlayer.check ? values.nameDisClose ? "Name not disclosed" : values.firstName : (addPlayersData[editAddPlayer.index]?.firstName || "")}
-                                                            value={values.firstName}
-                                                            name="firstName"
-                                                            onChange={(e) => { console.log("Changing field:", e.target.name, "New value:", e.target.value); setFieldValue(e.target.name, e.target.value) }}
-                                                            disabled={values.nameDisClose === true} isInvalid={touched.firstName && !!errors.firstName}
-                                                        />
-                                                        <Form.Control.Feedback type="invalid">{errors.firstName}</Form.Control.Feedback>
-                                                    </Col>
-                                                    <Col>
-                                                        <Form.Label className="fw-medium">LastName</Form.Label>
-                                                        <Form.Control type="text" placeholder="Enter lastName"
-                                                            //  value={!editAddPlayer.check ? values.nameDisClose ? "Name not disclosed" : values.lastName : addPlayersData[editAddPlayer.index].lastName}
-                                                            value={values.lastName}
-                                                            name="lastName"
-                                                            onChange={(e) => { console.log("Changing field:", e.target.name, "New value:", e.target.value); setFieldValue("lastName", e.target.value) }}
-                                                            disabled={values.nameDisClose === true} isInvalid={touched.firstName && !!errors.lastName}
-                                                        />
-                                                        <Form.Control.Feedback type="invalid">{errors.lastName} </Form.Control.Feedback>
-                                                    </Col>
-                                                </Row>
-                                                <Form.Check
-                                                    inline label="Same as Primary" name="sameAsPrimary" type={"checkbox"} className="mt-2" value={values.sameAsPrimary}
-                                                    onChange={(e) => {
-                                                        setFieldValue('sameAsPrimary', e.target.checked);
-                                                        setFieldValue('pricingRule', bookingDetails.pricingRuleCheck);
-                                                        setFieldValue('facilityType', bookingDetails.facilityCheck);
-                                                        setFieldValue('cost', addPlayers.cost);
-                                                        console.log("Changing field:", e.target.name, "New value:", e.target.value);
-                                                    }}
-
-                                                />
-                                                <Row className="mt-3 d-flex justify-content-between ">
-                                                    <Col xs={6} className="">
-                                                        <Form.Label className="px-0 fw-medium">Facility</Form.Label>
-                                                        <div className="h-35 border p-2">
-                                                            {Object.values(apiResponse.facilities).map((type: any, index: any) => {
-                                                                return (
-                                                                    <div key={index}>
-                                                                        {type.map((facility: any) => {
-                                                                            return (
-                                                                                <Form.Check
-                                                                                    type={"radio"}
-                                                                                    label={`${facility?.name}`}
-                                                                                    value={!editAddPlayer.check ? values.sameAsPrimary ? bookingDetails.facilityCheck : `${facility?.name}` : addPlayersData[editAddPlayer.index].facilityType}
-                                                                                    name="facilityType"
-                                                                                    disabled={values.sameAsPrimary === true}
-                                                                                    onClick={() => handleBookFacility(facility)}
-                                                                                    onChange={() => { handleChange({ target: { name: 'facilityType', value: facility?.name } }); setFieldValue('facilityId', facility?.id) }}
-                                                                                    checked={values.facilityType === facility?.name}
-                                                                                    isInvalid={!!errors.facilityType && touched.facilityType}
-
-                                                                                />)
-                                                                        })}
-                                                                    </div>
-                                                                )
+                                                                    />)
                                                             })}
+                                                            {/* </div>
+                                                            )
+                                                        })} */}
                                                         </div>
-                                                        {touched.facilityType && <span className="text-danger" >{errors.facilityType}</span>}
+                                                        {values.facility === "" && <span className="text-danger" >{errors.facility}</span>}
                                                     </Col>
-                                                    <Col xs={6} className="">
+                                                    <Col sm={12} lg={6} xl={6} className="">
                                                         <Form.Label className="px-0 fw-medium">Pricing Rule</Form.Label>
                                                         <div className="h-35 border p-2">
-                                                            <div className="fw-medium">{values.facilityType}</div>
-                                                            {Object.values(apiResponse.pricingrule).map((pricing, index) => {
-                                                                //  console.log(pricing?.pricingRuleId,"ki");
+                                                            <div className="fw-medium">{bookingDetails.facilities}</div>
+                                                            {spinner.checkAvialabilitySpinner ? <Spinner animation="border" variant="danger" /> : Object.values(apiResponse.pricingrule).map((pricing, index) => {
+                                                                //    console.log(pricing?.pricingRuleId,"pricein");
 
                                                                 return (
                                                                     <div key={index}>
                                                                         <Form.Check
                                                                             type={"radio"}
                                                                             label={`${pricing?.pricingRule?.ruleName}`}
-                                                                            value={!editAddPlayer.check ? values.sameAsPrimary ? bookingDetails.pricingRuleCheck : `${pricing?.pricingRule?.ruleName}` : addPlayersData[editAddPlayer.index].pricingRule}
-                                                                            name="pricingRule"
-                                                                            disabled={values.sameAsPrimary === true}
-                                                                            onClick={() => handleAddPlayerCost(pricing)}
-                                                                            onChange={() => { handleChange({ target: { name: 'pricingRule', value: pricing?.pricingRule?.ruleName } }); setFieldValue("cost", pricing?.pricingRule?.cost); setFieldValue("pricingRuleId", pricing?.pricingRuleId); }}
-                                                                            isInvalid={!!errors.pricingRule && touched.pricingRule}
-                                                                            checked={values.pricingRule === pricing?.pricingRule?.ruleName}
-
+                                                                            value={`${pricing?.pricingRule?.ruleName}`}
+                                                                            name={"pricingRule"}
+                                                                            onChange={() => handleChange({ target: { name: 'pricingRule', value: pricing?.pricingRule?.ruleName } })}
+                                                                            defaultChecked={values.pricingRule === `${pricing?.pricingRule?.ruleName}`}
+                                                                            isInvalid={!!errors.pricingRule}
+                                                                            onClick={() => handleBookingCost(pricing)}
+                                                                            disabled={buttonText === 'Edit'}
                                                                         />
                                                                     </div>
                                                                 )
                                                             })}
                                                         </div>
-                                                        {touched.pricingRule && <span className="text-danger">{errors.pricingRule}</span>}
+                                                        <span className="text-danger">{errors.pricingRule}</span>
                                                     </Col>
                                                 </Row>
-                                              {showAlert &&  <Alert variant="success"  className="mt-2">
-                                                    Player {editAddPlayer.check === true ? "Updated":"Added"} SuccessFully
-                                                </Alert>}
-                                                <div className="text-center mt-2 "> <Button variant={editAddPlayer.check === false ? "success" : "warning"} type="submit" className="w-75" >{editAddPlayer.check === false ? "Add" : "Update"}</Button> </div>
-                                                <div className="text-center mt-2"> <Button variant="danger" type="button" className="w-75" onClick={handleAddPlayerClose}>Close</Button> </div>
+                                                <div className="text-end">
+                                                    <Button variant={buttonText === 'Edit' ? "warning" : "success"} type="submit" className="mt-2 ">{buttonText}</Button>
+                                                </div>
                                             </Form>
                                         )}
                                     </Formik>
-                                </Offcanvas.Body>
-                            </Offcanvas>
+                                </Row>
+                                {buttonText === "Edit" &&
+                                    <div><Button variant="danger" onClick={handleAddPlayerOpen}>Add Player</Button></div>
+                                }
+                                {addPlayersData.length > 0 && <Table responsive bordered hover striped className="mt-2">
+                                    <thead className="border">
+                                        {Array.isArray(TableAddPlayers) && TableAddPlayers.map((head) => {
+                                            return (
+                                                <th className="border p-2">{head.label}</th>
+                                            )
+                                        })}
+                                    </thead>
+                                    <tbody>
+                                        {Array.isArray(addPlayersData) && addPlayersData.map((data: { pricingRule: ReactNode; facilityType: ReactNode; firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; lastName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: number) => {
+                                            // console.log(addPlayersData, "addpalydata");
+                                            return (
+                                                <tr key={index}>
+                                                    <td>{index + 1}</td>
+                                                    <td>{data.firstName}</td>
+                                                    <td>{data.lastName}</td>
+                                                    <td>{data.facilityType}</td>
+                                                    <td>{data.pricingRule}</td>
+                                                    <td>{data.cost ? data.cost : bookingDetails.costPrimary}</td>
+                                                    <td><div className="bg-warning w-50 px-2 mx-auto rounded-2 mt-1" onClick={() => handleEdit(index, data)}><Icon icon="uil:edit" /></div><div className="bg-danger w-50 px-2 mx-auto  mt-1 rounded-2" onClick={() => deleteRow(index, data)}><Icon icon="mi:delete" /></div></td>
+                                                </tr>
+                                            )
+                                        })}
+                                    </tbody>
+                                </Table>}
+                                <Offcanvas show={addShow} onHide={handleAddPlayerClose} placement="end">
+                                    <Offcanvas.Header closeButton>
+                                        <Offcanvas.Title>{editAddPlayer.check === false ? "Add" : "Edit"} Player</Offcanvas.Title>
+                                    </Offcanvas.Header>
+                                    <Offcanvas.Body>
+                                        <Formik
+                                            validationSchema={schemae}
+                                            onSubmit={handlePlayerSubmit}
+                                            initialValues={{
+                                                firstName: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.firstName ? addPlayersData[editAddPlayer.index].firstName : "",
+                                                lastName: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.lastName ? addPlayersData[editAddPlayer.index].lastName : "",
+                                                facilityType: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.facilityType ? addPlayersData[editAddPlayer.index].facilityType : "",
+                                                pricingRule: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.pricingRule ? addPlayersData[editAddPlayer.index].pricingRule : "",
+                                                sameAsPrimary: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.sameAsPrimary ? addPlayersData[editAddPlayer.index].sameAsPrimary : false,
+                                                nameDisClose: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.nameDisClose ? addPlayersData[editAddPlayer.index].nameDisClose : false,
+                                                cost: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.cost ? addPlayersData[editAddPlayer.index].cost : "",
+                                                pricingRuleId: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.pricingRuleId ? addPlayersData[editAddPlayer.index].pricingRuleId : "",
+                                                facilityId: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.facilityId ? addPlayersData[editAddPlayer.index].facilityId : "",
+                                            }}
+                                        //  enableReinitialize={true}
+                                        >
+                                            {/* {({ initialValues }) => {
+                                            console.log("Initial Values:", initialValues);
+                                            // Rest of your Formik code
+                                        }} */}
+                                            {({ handleSubmit, handleChange, values, errors, setFieldValue, touched }) => (
+                                                <Form onSubmit={handleSubmit}>
+                                                    <Form.Check
+                                                        inline
+                                                        label="Name not disclosed"
+                                                        name="nameDisClose"
+                                                        type={"checkbox"}
+                                                        className="mt-2 "
+                                                        checked={values.nameDisClose}
+                                                        onClick={(e: any) => {
+                                                            console.log("Changing field:", e.target.name, "New value:", e.target.value, e.target.checked);
+                                                            setFieldValue('nameDisClose', e.target.checked);
+                                                            setFieldValue('firstName', e.target.checked === true ? "Name not disclosed" : "");
+                                                            setFieldValue('lastName', e.target.checked === true ? "Name not disclosed" : "");
+                                                            setFieldValue('touched.firstName', e.target.checked);
+                                                            setFieldValue('touched.lastName', e.target.checked);
+                                                        }}
+                                                    />
+                                                    <Row className="mt-2">
+                                                        <Col>
+                                                            <Form.Label className="fw-medium">FirstName</Form.Label>
+                                                            <Form.Control type="text" placeholder="Enter firstName"
+                                                                //  value={!editAddPlayer.check ? values.nameDisClose ? "Name not disclosed" : values.firstName : (addPlayersData[editAddPlayer.index]?.firstName || "")}
+                                                                value={values.firstName}
+                                                                name="firstName"
+                                                                onChange={(e) => { console.log("Changing field:", e.target.name, "New value:", e.target.value); setFieldValue(e.target.name, e.target.value) }}
+                                                                disabled={values.nameDisClose === true} isInvalid={touched.firstName && !!errors.firstName}
+                                                            />
+                                                            <Form.Control.Feedback type="invalid">{errors.firstName}</Form.Control.Feedback>
+                                                        </Col>
+                                                        <Col>
+                                                            <Form.Label className="fw-medium">LastName</Form.Label>
+                                                            <Form.Control type="text" placeholder="Enter lastName"
+                                                                //  value={!editAddPlayer.check ? values.nameDisClose ? "Name not disclosed" : values.lastName : addPlayersData[editAddPlayer.index].lastName}
+                                                                value={values.lastName}
+                                                                name="lastName"
+                                                                onChange={(e) => { console.log("Changing field:", e.target.name, "New value:", e.target.value); setFieldValue("lastName", e.target.value) }}
+                                                                disabled={values.nameDisClose === true} isInvalid={touched.firstName && !!errors.lastName}
+                                                            />
+                                                            <Form.Control.Feedback type="invalid">{errors.lastName} </Form.Control.Feedback>
+                                                        </Col>
+                                                    </Row>
+                                                    <Form.Check
+                                                        inline label="Same as Primary" name="sameAsPrimary" type={"checkbox"} className="mt-2" value={values.sameAsPrimary}
+                                                        onChange={(e) => {
+                                                            setFieldValue('sameAsPrimary', e.target.checked);
+                                                            setFieldValue('pricingRule', bookingDetails.pricingRuleCheck);
+                                                            setFieldValue('facilityType', bookingDetails.facilityCheck);
+                                                            setFieldValue('cost', addPlayers.cost);
+                                                            console.log("Changing field:", e.target.name, "New value:", e.target.value);
+                                                        }}
+
+                                                    />
+                                                    <Row className="mt-3 d-flex justify-content-between ">
+                                                        <Col xs={6} className="">
+                                                            <Form.Label className="px-0 fw-medium">Facility</Form.Label>
+                                                            <div className="h-35 border p-2">
+                                                                {Object.values(apiResponse.facilities).map((type: any, index: any) => {
+                                                                    return (
+                                                                        <div key={index}>
+                                                                            {type.map((facility: any) => {
+                                                                                return (
+                                                                                    <Form.Check
+                                                                                        type={"radio"}
+                                                                                        label={`${facility?.name}`}
+                                                                                        value={!editAddPlayer.check ? values.sameAsPrimary ? bookingDetails.facilityCheck : `${facility?.name}` : addPlayersData[editAddPlayer.index].facilityType}
+                                                                                        name="facilityType"
+                                                                                        disabled={values.sameAsPrimary === true}
+                                                                                        onClick={() => handleBookFacility(facility)}
+                                                                                        onChange={() => { handleChange({ target: { name: 'facilityType', value: facility?.name } }); setFieldValue('facilityId', facility?.id) }}
+                                                                                        checked={values.facilityType === facility?.name}
+                                                                                        isInvalid={!!errors.facilityType && touched.facilityType}
+
+                                                                                    />)
+                                                                            })}
+                                                                        </div>
+                                                                    )
+                                                                })}
+                                                            </div>
+                                                            {touched.facilityType && <span className="text-danger" >{errors.facilityType}</span>}
+                                                        </Col>
+                                                        <Col xs={6} className="">
+                                                            <Form.Label className="px-0 fw-medium">Pricing Rule</Form.Label>
+                                                            <div className="h-35 border p-2">
+                                                                <div className="fw-medium">{values.facilityType}</div>
+                                                                {Object.values(apiResponse.pricingrule).map((pricing, index) => {
+                                                                    //  console.log(pricing?.pricingRuleId,"ki");
+
+                                                                    return (
+                                                                        <div key={index}>
+                                                                            <Form.Check
+                                                                                type={"radio"}
+                                                                                label={`${pricing?.pricingRule?.ruleName}`}
+                                                                                value={!editAddPlayer.check ? values.sameAsPrimary ? bookingDetails.pricingRuleCheck : `${pricing?.pricingRule?.ruleName}` : addPlayersData[editAddPlayer.index].pricingRule}
+                                                                                name="pricingRule"
+                                                                                disabled={values.sameAsPrimary === true}
+                                                                                onClick={() => handleAddPlayerCost(pricing)}
+                                                                                onChange={() => { handleChange({ target: { name: 'pricingRule', value: pricing?.pricingRule?.ruleName } }); setFieldValue("cost", pricing?.pricingRule?.cost); setFieldValue("pricingRuleId", pricing?.pricingRuleId); }}
+                                                                                isInvalid={!!errors.pricingRule && touched.pricingRule}
+                                                                                checked={values.pricingRule === pricing?.pricingRule?.ruleName}
+
+                                                                            />
+                                                                        </div>
+                                                                    )
+                                                                })}
+                                                            </div>
+                                                            {touched.pricingRule && <span className="text-danger">{errors.pricingRule}</span>}
+                                                        </Col>
+                                                    </Row>
+                                                    {showAlert && <Alert variant="success" className="mt-2">
+                                                        Player {editAddPlayer.check === true ? "Updated" : "Added"} SuccessFully
+                                                    </Alert>}
+                                                    <div className="text-center mt-2 "> <Button variant={editAddPlayer.check === false ? "success" : "warning"} type="submit" className="w-75" >{editAddPlayer.check === false ? "Add" : "Update"}</Button> </div>
+                                                    <div className="text-center mt-2"> <Button variant="danger" type="button" className="w-75" onClick={handleAddPlayerClose}>Close</Button> </div>
+                                                </Form>
+                                            )}
+                                        </Formik>
+                                    </Offcanvas.Body>
+                                </Offcanvas>
                             </>}
                             <Row className="mt-4 mx-1 ">
                                 <Form.Label className="px-0 fw-medium">Notes</Form.Label>
@@ -1202,7 +1209,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                             <td>{bookingDetails.pricingRuleCheck}</td>
                                             <td className="fw-bold">${bookingDetails.costPrimary}</td>
                                         </tr>
-                                        {Array.isArray(addPlayersData) && addPlayersData.map((data: { pricingRule: ReactNode;facilityType: ReactNode; firstName: ReactNode | string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: number) => {
+                                        {Array.isArray(addPlayersData) && addPlayersData.map((data: { pricingRule: ReactNode; facilityType: ReactNode; firstName: ReactNode | string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: number) => {
                                             let serialnumber: any = index + 2;
                                             return (
                                                 <tr key={index}>
