@@ -84,7 +84,7 @@ const navigate = useNavigate();
               <InputField label={"Password"} labelClassName={"text-black my-2"} type={"password"} name={"password"} onChange={handleChange} placeholder={"Enter Password"} value={values.password} errors={errors.password}/>
               <div className="d-flex justify-content-end mt-3 text-danger">Forgot Password?</div>
               <div>
-                <Button variant="danger" className="  w-100 my-3 shadow-3" type="submit" >
+                <Button variant="danger" className="  w-100 my-3 shadow-3" type="submit" disabled={spinner.loginSpinner}>
                   Sign in
                   <span>{spinner.loginSpinner ? <Spinner animation="border" variant="light" size="sm" className="ms-3" /> : null}</span>
                 </Button>

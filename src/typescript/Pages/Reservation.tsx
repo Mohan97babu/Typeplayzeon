@@ -111,7 +111,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const [addPlayersData, setAddPlayersData] = useState<any>([]);
     const [calendarDetails, setCalendarDetails] = useState<calendarDetails>({
         facilityType: "",
-        facilities: "",
+        facilities: "All Court",
         date: "" || new Date(),
         sportsId: "",
         facilityId: "",
@@ -159,7 +159,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         firstName: yup.string().required("FirstName is a Required Field"),
         lastName: yup.string().required("LastName is a Required Field"),
         emailAddress: yup.string().email().required("EmailAddress is a Required Field"),
-        phoneNumber: yup.string().required("PhoneNumber is a Required Field"),
+        phoneNumber: yup.string().max(10).required("PhoneNumber is a Required Field"),
         facility: yup.string().required('Facility selection is a required'),
         pricingRule: yup.string().required(),
     })
@@ -187,7 +187,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         console.log(event, pricingId, "E");
 
 
-        setBookingDetails({ ...bookingDetails, firstName: event.firstName, lastName: event.lastName, emailAddress: event.emailAddress, phoneNumber: event.phoneNumber, pricingRuleCheck: event.pricingRule, facilityCheck: event.facility, pricingRule: pricingId })
+        setBookingDetails({ ...bookingDetails, firstName: event.firstName, lastName: event.lastName, emailAddress: event.emailAddress, phoneNumber: event.phoneNumber, pricingRuleCheck: event.pricingRule, facilities: event.facility, pricingRule: pricingId })
         if (buttonText === 'Save') {
             setButtonText('Edit');
         }
@@ -201,6 +201,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const resetBookDetails = () => {
         setBookingDetails({ ...bookingDetails, bookingType: "Player Booking", facilityType: "Tennis Court", bookingOccurence: "Single Booking", frequency: "", startDate: null, endDate: null, startTime: "", endTime: "", firstName: "", lastName: "", emailAddress: "", phoneNumber: "", pricingRule: "", facilities: "", notes: "", facilityCheck: "", pricingRuleCheck: "", selectedDays: [], daysValues: [], costPrimary: "", sportsId: 1 })
         setAddPlayersData([]);
+        setAppearForm(false);
         setButtonText('Save');
         setErrorsMessage("");
         setApiResponse({ ...apiResponse, checkFacility: [], pricingrule: [] });
@@ -438,7 +439,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const fetchEventData = async (date) => {
   
         try {
-            const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${dateOf1.format()}&end.lessThanOrEqual=${dateOf.format()}&Id.in=${calendarDetails.facilities === "" ? facilityItemIds : calendarDetails.facilityId}`);
+            const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${dateOf1.format()}&end.lessThanOrEqual=${dateOf.format()}&Id.in=${calendarDetails.facilities === "All Court" ? facilityItemIds : calendarDetails.facilityId}`);
             const responseData = response.data;
             const resources = responseData.myresources;
             const timings = responseData.timings;
@@ -457,8 +458,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     end: moments(evente?.end).tz(response?.data?.timezone?.name).utc()._d,
                     resourceId: evente.resourceId,
                     bgColor: evente.bgColor,
-                    // firstName:evente.reservation.booking.firstName,
-                    // lastName:evente.reservation.booking.lastName,
+                     firstName:evente.reservation.booking.firstName,
+                     lastName:evente.reservation.booking.lastName,
                     startTime: evente.reservation.booking.startTime,
                     endTime: evente.reservation.booking.endTime,
                     totalPrice: evente.reservation.booking.total,
@@ -657,7 +658,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         console.log(view,"viewdATE");
        setView(view);
     }
-    console.log(bookingDetails, selectedEvent, "bookrev")
+    console.log(bookingDetails, "bookrev")
     console.log(spinner, "apifac");
 
 console.log(calendarDetails.date,"dYYYYYYYYYY");
@@ -670,7 +671,7 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
             <Row className="p-3 mx-0">
                 <div className="d-lg-flex justify-content-between">
                     <Col sm={12} md={12} lg={2} xl={3}>
-                        <div>Facility Type {spinner.sportSpinner ? <Spinner animation="border" variant="danger" size="sm" /> : null}</div>
+                        <div>Facility Type <span className="text-danger">*</span> {spinner.sportSpinner ? <Spinner animation="border" variant="danger" size="sm" /> : null}</div>
                         <Form.Select aria-label="Default select example" className="mt-2" value={calendarDetails.facilityType} name="facilityType" onChange={(e) => handleCalendarChange(e)}>
                             {Array.isArray(apiResponse.facilityType) && apiResponse.facilityType.map((facility: any) => {
                                 const sportsId = facility.sport.id;
@@ -681,9 +682,9 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                         </Form.Select>
                     </Col>
                     <Col sm={12} md={12} lg={2} xl={3}>
-                        <label>Facilities {spinner.facilitySpinner ? <Spinner animation="border" variant="danger" size="sm" /> : null}</label>
+                        <label >Facilities <span className="text-danger">*</span> {spinner.facilitySpinner ? <Spinner animation="border" variant="danger" size="sm" /> : null}</label>
                         <Form.Select aria-label="Default select example" className="mt-2" value={calendarDetails.facilityId} onChange={handleIds}>
-                            <option value={""}>All Court</option>
+                            <option value={"All Court"}>All Court</option>
                             {Object.entries(apiResponse.facilities).map(([courtName, courtArray]) => (
                                 courtArray.map((facilityItem: { id: any; name: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined; }, index: any) => {
                                     facilityItemIds.push(facilityItem.id);
@@ -735,6 +736,16 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                     <Offcanvas show={showEvent} onHide={handleEventClose} placement="end" >
                         <Offcanvas.Header className="bg-gainsboro fw-medium" closeButton>Booking Preview</Offcanvas.Header>
                         <Offcanvas.Body>
+                        <Row>
+                                <Col>
+                                    <div className="fw-medium text-secondary">First Name</div>
+                                    <div className="fw-bold text-capitalize">{selectedEvent.firstName}</div>
+                                </Col>
+                                <Col>
+                                    <div className="fw-medium text-secondary">Last Name</div>
+                                    <div className="fw-bold">{selectedEvent?.lastName}</div>
+                                </Col>
+                            </Row>
                             <Row>
                                 <Col>
                                     <div className="fw-medium text-secondary">Payment method</div>
@@ -744,7 +755,7 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                     <div className="fw-medium text-secondary">Rate per session</div>
                                     <div className="fw-bold">${selectedEvent?.rate}</div>
                                 </Col>
-                            </Row>
+                            </Row>                     
                             <Row>
                                 <Col>
                                     <div className="fw-medium text-secondary">Start Time</div>
@@ -806,7 +817,7 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                     </Form.Select>
                                 </Col>
                                 <Col sm={12} xl={6}>
-                                    <Form.Label>Facility Type<span className="text-danger ms-1">*</span></Form.Label>
+                                    <Form.Label className="fw-medium">Facility Type<span className="text-danger ms-1">*</span></Form.Label>
                                     {/* <Form.Select aria-label="Default select example" name="facilityType" value={bookingDetails.facilityType} onChange={handleChange}>
                                         {apiResponse.facilityType.map((facility) => {
                                             return (
@@ -835,7 +846,7 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                 </Col>
                                 {bookingDetails.bookingOccurence === "Multiple Booking" &&
                                     <Col>
-                                        <Form.Label>Frequency</Form.Label>
+                                        <Form.Label className="fw-medium">Frequency</Form.Label>
                                         <Form.Select aria-label="Default select example" name="frequency" value={bookingDetails.frequency} onChange={handleChange} disabled>
                                             <option value={"Weekly"}>Weekly</option>
                                         </Form.Select>
@@ -844,22 +855,22 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                             <Row className="mt-4">
                                 <Col sm={12} md={6} lg={3} xl={3}>
                                     <Form.Group controlId="formBasicEmail">
-                                        <Form.Label className="mb-0">Start Date<span className="text-danger ms-1">*</span></Form.Label>
+                                        <Form.Label className="mb-0 fw-medium">Start Date<span className="text-danger ms-1">*</span></Form.Label>
                                         <DatePicker className="form-control mt-2" minDate={new Date()} selected={bookingDetails.startDate || ""} onChange={handleDateChange} placeholderText="mm/dd/yyyy" />
                                     </Form.Group>
                                 </Col>
                                 <Col sm={12} md={6} lg={3} xl={3}>
                                     <Form.Group controlId="formBasicEmail">
-                                        <Form.Label className="mb-0">End Date<span className="text-danger ms-1">*</span></Form.Label>
+                                        <Form.Label className="mb-0 fw-medium">End Date<span className="text-danger ms-1">*</span></Form.Label>
                                         <DatePicker className="form-control mt-2" selected={bookingDetails.endDate || ""} onChange={handleDateChange} disabled={bookingDetails.bookingOccurence === "Single Booking"} minDate={bookingDetails.startDate} placeholderText="mm/dd/yyyy" excludeDates={[bookingDetails.startDate]} />
                                     </Form.Group>
                                 </Col>
                                 <Col sm={12} md={6} lg={3} xl={3}>
-                                    <Form.Label className="mb-2">Start Time<span className="text-danger ms-1">*</span></Form.Label>
+                                    <Form.Label className="mb-2 fw-medium">Start Time<span className="text-danger ms-1">*</span></Form.Label>
                                     <Select value={Time.find(option => option.value === startTime) || startTime} onChange={(selectedOption, actionMeta) => handleReactSelectChange(selectedOption, actionMeta)} options={Time} placeholder="hh:mm" name="startTime" isDisabled={bookingDetails.startDate === null && bookingDetails.endDate === null} />
                                 </Col>
                                 <Col sm={12} md={6} lg={3} xl={3}>
-                                    <Form.Label className="mb-2 ">End Time<span className="text-danger ms-1">*</span></Form.Label>
+                                    <Form.Label className="mb-2 fw-medium">End Time<span className="text-danger ms-1">*</span></Form.Label>
                                     <Select value={Time.find(option => option.value === endTime) || endTime} onChange={(selectedOption, actionMeta) => handleReactSelectChange(selectedOption, actionMeta)} options={Time} placeholder="hh:mm" name="endTime" isDisabled={bookingDetails.startDate === null && bookingDetails.endDate === null} />
                                 </Col>
                             </Row>
@@ -874,7 +885,6 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                 <p className="text-danger">{errorsMessage}</p>
                             </div>
                             {appearForm && <>
-
                                 <div className="fw-medium">Available Facility</div>
                                 {apiResponse?.checkFacility?.map((facilities) => {
                                     return (
@@ -901,31 +911,31 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                             <Form onSubmit={handleSubmit}>
                                                 <Row className="mt-2">
                                                     <Col sm={12} lg={6} xl={6}>
-                                                        <Form.Label>First Name</Form.Label>
+                                                        <Form.Label className="fw-medium">First Name <span className="text-danger">*</span></Form.Label>
                                                         <Form.Control type="text" placeholder="Enter First Name" className="mt-1" name="firstName" value={values.firstName} onChange={handleChange} isInvalid={!!errors.firstName} disabled={buttonText === 'Edit'} />
                                                         <Form.Control.Feedback type={"invalid"} >{errors.firstName}</Form.Control.Feedback>
                                                     </Col>
                                                     <Col sm={12} lg={6} xl={6}>
-                                                        <Form.Label>Last Name</Form.Label>
+                                                        <Form.Label className="fw-medium">Last Name <span className="text-danger">*</span></Form.Label>
                                                         <Form.Control type="text" placeholder="Enter Last Name" className="mt-1" name="lastName" value={values.lastName} onChange={handleChange} isInvalid={!!errors.lastName} disabled={buttonText === 'Edit'} />
                                                         {errors.lastName && <Form.Control.Feedback type={"invalid"} >{errors.lastName}</Form.Control.Feedback>}
                                                     </Col>
                                                 </Row>
                                                 <Row className="mt-2">
                                                     <Col sm={12} lg={6} xl={6}>
-                                                        <Form.Label>Phone Number</Form.Label>
+                                                        <Form.Label className="fw-medium">Phone Number <span className="text-danger">*</span></Form.Label>
                                                         <Form.Control type="number" placeholder="Enter Phone Number" className="mt-1" name="phoneNumber" value={values.phoneNumber} onChange={handleChange} isInvalid={!!errors.phoneNumber} disabled={buttonText === 'Edit'} />
                                                         {errors.phoneNumber && <Form.Control.Feedback type={"invalid"} >{errors.phoneNumber}</Form.Control.Feedback>}
                                                     </Col>
                                                     <Col sm={12} lg={6} xl={6}>
-                                                        <Form.Label>Email address</Form.Label>
+                                                        <Form.Label className="fw-medium">Email address <span className="text-danger">*</span></Form.Label>
                                                         <Form.Control type="text" placeholder="Enter Email address" className="mt-1" name="emailAddress" value={values.emailAddress} onChange={handleChange} isInvalid={!!errors.emailAddress} disabled={buttonText === 'Edit'} />
                                                         <Form.Control.Feedback type={"invalid"} >{errors.emailAddress}</Form.Control.Feedback>
                                                     </Col>
                                                 </Row>
                                                 <Row className="mt-3 d-flex justify-content-between ">
                                                     <Col sm={12} lg={6} xl={6} className="">
-                                                        <Form.Label className="px-0 fw-medium">Facility</Form.Label>
+                                                        <Form.Label className="px-0 fw-medium">Facility <span className="text-danger">*</span></Form.Label>
                                                         <div className="h-35 border p-2" >
                                                             {/* {Object.values(apiResponse.facilities).map((type: any, index: any) => {
                                                             return (
@@ -971,7 +981,7 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                                         {values.facility === "" && <span className="text-danger" >{errors.facility}</span>}
                                                     </Col>
                                                     <Col sm={12} lg={6} xl={6} className="">
-                                                        <Form.Label className="px-0 fw-medium">Pricing Rule</Form.Label>
+                                                        <Form.Label className="px-0 fw-medium">Pricing Rule <span className="text-danger">*</span></Form.Label>
                                                         <div className="h-35 border p-2">
                                                             <div className="fw-medium">{bookingDetails.facilities}</div>
                                                             {spinner.checkAvialabilitySpinner ? <Spinner animation="border" variant="danger" /> : Object.values(apiResponse.pricingrule).map((pricing, index) => {
@@ -1005,7 +1015,7 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                     </Formik>
                                 </Row>
                                 {buttonText === "Edit" &&
-                                    <div><Button variant="danger" onClick={handleAddPlayerOpen}>Add Player</Button></div>
+                                    <div><Button variant="danger" onClick={handleAddPlayerOpen}>Add Players</Button></div>
                                 }
                                 {addPlayersData.length > 0 && <Table responsive bordered hover striped className="mt-2">
                                     <thead className="border">
@@ -1104,7 +1114,7 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                                         onChange={(e) => {
                                                             setFieldValue('sameAsPrimary', e.target.checked);
                                                             setFieldValue('pricingRule', bookingDetails.pricingRuleCheck);
-                                                            setFieldValue('facilityType', bookingDetails.facilityCheck);
+                                                            setFieldValue('facilityType', bookingDetails.facilities);
                                                             setFieldValue('cost', addPlayers.cost);
                                                             console.log("Changing field:", e.target.name, "New value:", e.target.value);
                                                         }}
@@ -1122,7 +1132,7 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                                                                     <Form.Check
                                                                                         type={"radio"}
                                                                                         label={`${facility?.name}`}
-                                                                                        value={!editAddPlayer.check ? values.sameAsPrimary ? bookingDetails.facilityCheck : `${facility?.name}` : addPlayersData[editAddPlayer.index].facilityType}
+                                                                                        value={!editAddPlayer.check ? values.sameAsPrimary ? bookingDetails.facilities : `${facility?.name}` : addPlayersData[editAddPlayer.index].facilityType}
                                                                                         name="facilityType"
                                                                                         disabled={values.sameAsPrimary === true}
                                                                                         onClick={() => handleBookFacility(facility)}
@@ -1215,7 +1225,7 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                         <tr>
                                             <td>1</td>
                                             <td>{bookingDetails.firstName}</td>
-                                            <td>{bookingDetails.facilityCheck}</td>
+                                            <td>{bookingDetails.facilities}</td>
                                             <td>{bookingDetails.pricingRuleCheck}</td>
                                             <td className="fw-bold">${bookingDetails.costPrimary}</td>
                                         </tr>
@@ -1297,7 +1307,7 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                                 <tr>
                                                     <td>1</td>
                                                     <td>{bookingDetails.firstName}</td>
-                                                    <td>{bookingDetails.facilityCheck}</td>
+                                                    <td>{bookingDetails.facilities}</td>
                                                     <td>{bookingDetails.pricingRuleCheck}</td>
                                                     <td className="fw-bold">${bookingDetails.costPrimary}</td>
                                                 </tr>

@@ -68,7 +68,7 @@
   background: #b30000; 
 }
 .card-img{
-  height:14vh !important;
+  height:16vh !important;
   filter: brightness(50%);
 }
 .hover-border1:hover{
@@ -97,7 +97,7 @@
   color:green
 } */
 .card-img2{
-  height:14vh;
+  height:16vh;
   filter: brightness(90%);
   
 }
