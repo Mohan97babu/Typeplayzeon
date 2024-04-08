@@ -280,7 +280,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 .catch((err) => console.log(err));
         }
         listSports();
-        fetchEventData();
+       // fetchEventData();
     }, []);
     // const handleBookFacility = async (type: any) => {
     //     setBookingDetails({ ...bookingDetails, facilities: type.name, facilityCheck: type.id });
@@ -426,18 +426,42 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     let facilityItemIds = [];
     let title = [];
     console.log(facilityItemIds, "ids");
-
+    const [view,setView] = useState('day');
+    useEffect(()=>{
+      fetchEventData();
+    },[view])
     let moments = require('moment-timezone');
     const [eventsListing, setEventsListing] = useState([])
     const modifyDate = calendarDetails.date;
-    const dateOf1 = moment(modifyDate).utc();
+  //  const dateOf1 = moment(modifyDate).utc();
  //   console.log(dateOf1.format(), "datty");
-    const dateOf = dateOf1.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute').utc();
-  //  console.log(dateOf.format(), "datecal");
+ //   let dateOf = dateOf1.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute').utc();
+  // const dateOf = dateOf1.startOf('day').fromNow();
+   // console.log(dateOf.format(), "datecal");
 
     // currentMoment.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute')
-    const fetchEventData = async (date) => {
-  
+    const fetchEventData = async () => {
+    const dateOf1 = moment(modifyDate).utc();
+    let dateOf;
+   // setSpinner({...spinner,calendarSpinner:true})
+    console.log(view,"vbnnj");
+    
+   if(view === 'week')
+    {
+        dateOf = dateOf1.clone().add(1, 'week').subtract(1, 'second').subtract(1, 'minute').utc();
+        console.log(dateOf.format(), "datecal");
+    }
+    else if(view === 'month')
+        {
+             dateOf = dateOf1.clone().add(1, 'month').subtract(1, 'second').subtract(1, 'minute').utc();
+            console.log(dateOf.format(), "datecal");
+        }
+        else if(view === 'day')
+        {
+             dateOf = dateOf1.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute').utc(); 
+            console.log(dateOf.format(), "datecal");
+        }
+       // console.log(dateOf.format(), "datecal");
         try {
             const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${dateOf1.format()}&end.lessThanOrEqual=${dateOf.format()}&Id.in=${calendarDetails.facilities === "All Court" ? facilityItemIds : calendarDetails.facilityId}`);
             const responseData = response.data;
@@ -447,7 +471,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
 
 
             setTime({ ...time, start: timings.start, end: timings.end })
-            setSpinner({ ...spinner, calendarSpinner: false });
+           
             const eventList = responseData.events.map((evente) => {
                 console.log(evente, "evein");
 
@@ -488,6 +512,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             } else {
                 //  console.log('Invalid data structure or missing timing information.');
             }
+            setSpinner({ ...spinner, calendarSpinner: false });
         } catch (error) {
             console.error('Error fetching event data:', error);
         }
@@ -510,8 +535,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const endTime24HourFormat = endTimeMoment.format('HH:mm:ss');
     const startDate = moment(bookingDetails.startDate).format('YYYY-MM-DD');
     const endDate = moment(bookingDetails.endDate).format('YYYY-MM-DD');
-    const startDateTime = moment.utc(`${startDate}T${startTime24HourFormat}Z`).add(7, 'hours').format();
-    const endDateTime = moment.utc(`${endDate}T${endTime24HourFormat}Z`).add(7, 'hours').format();
+    const startDateTime = moment.utc(`${startDate}T${startTime24HourFormat}Z`).format();
+    const endDateTime = moment.utc(`${endDate}T${endTime24HourFormat}Z`).format();
     const handleCheckAvialability = () => {
         //console.log(bookingDetails.sportsId,"hjy");
         setSpinner({ ...spinner, checkAvialabilitySpinner: true });
@@ -599,12 +624,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         },
         "reservationPlayers": data
     }
-
-    //    console.log(bookReservation,addPlayersData,"ffd")
-    //  console.log("Rendering form component");
-    // useEffect(() => {
-    //     console.log("Component mounted or updated");
-    // }, [editAddPlayer.index, addPlayersData]);
     const handleBookReservation = () => {
         axios.post(`${tempURL}/api/v1/reservations`, bookReservation)
             .then((response) => {
@@ -648,16 +667,20 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             style: style
         };
     }
+
     const handleNavigation =(date) =>{
-       // console.log(date,view,"viewdate");
-       fetchEventData(date);
+       console.log(moment(date).utc(),"viewdate");
+     //  fetchEventData(date);
+    // setDate(date)
         
     }
-    const [view,setView] = useState('day');
+   
     const handleViewChange =(view) =>{
         console.log(view,"viewdATE");
        setView(view);
+    //  fetchEventData(view);
     }
+    console.log(view,"viewoutside");
     console.log(bookingDetails, "bookrev")
     console.log(spinner, "apifac");
 
