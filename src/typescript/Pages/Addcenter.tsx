@@ -87,7 +87,9 @@ useEffect(() => {
   }
 }, [orgId, setOrgDetails, tempURL]);
 
-const handleReservation = (centerId: string) => {
+const handleReservation = (centerId: string,timezone:string) => {
+  console.log(timezone,"timkkk");
+  localStorage.setItem("timezone",timezone);
   localStorage.setItem("centerId", centerId);
   navigate("/reservation");
 };
@@ -123,7 +125,7 @@ return (
       :<Card className="bg-white p-3 rounded-3">
         <div className="row">
           {centerData?.map((center:any) => (
-            <div key={center.id} style={{ width: '15rem', height: "275px" }} className="m-xl-3 mx-auto my-2 col-sm-6 col-md-6 col-lg-3 col-xl-3 border rounded-2 px-0 " onClick={() => handleReservation(center.id)}>
+            <div key={center.id} style={{ width: '15rem', height: "275px" }} className="m-xl-3 mx-auto my-2 col-sm-6 col-md-6 col-lg-3 col-xl-3 border rounded-2 px-0 " onClick={() => handleReservation(center.id,center.timezone.name)}>
               {center.photos[0]?.url ? <div className='position-relative '>
                 <Card.Img src={center.photos[0].url} className="px-0 mb-0 card-img " /> 
                 <p className='text-overlay position-absolute top-55 fw-medium ps-3 mt-4 text-color '>{center?.title}</p> </div> : <Card.Title className="bg-grayCol card-img2  mb-0 d-flex align-items-end fs-6  "><span className="ms-3 mb-2 text-white">{center?.title}</span></Card.Title>}

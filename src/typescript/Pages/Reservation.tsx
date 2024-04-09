@@ -152,7 +152,11 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
 
         }
     }, [addPlayersData]);
-
+    let modifyDate;
+    const [view,setView] = useState('day');
+    useEffect(()=>{
+      fetchEventData();
+    },[modifyDate,view])
 
     const centerId = localStorage.getItem("centerId");
     const schema = yup.object().shape({
@@ -426,13 +430,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     let facilityItemIds = [];
     let title = [];
     console.log(facilityItemIds, "ids");
-    const [view,setView] = useState('day');
-    useEffect(()=>{
-      fetchEventData();
-    },[view])
+    
     let moments = require('moment-timezone');
     const [eventsListing, setEventsListing] = useState([])
-    const modifyDate = calendarDetails.date;
+     modifyDate = calendarDetails.date;
   //  const dateOf1 = moment(modifyDate).utc();
  //   console.log(dateOf1.format(), "datty");
  //   let dateOf = dateOf1.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute').utc();
@@ -444,21 +445,21 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const dateOf1 = moment(modifyDate).utc();
     let dateOf;
    // setSpinner({...spinner,calendarSpinner:true})
-    console.log(view,"vbnnj");
+   // console.log(moment(newDate).format(),endDate,"vbnnj");
     
    if(view === 'week')
     {
-        dateOf = dateOf1.clone().add(1, 'week').subtract(1, 'second').subtract(1, 'minute').utc();
-        console.log(dateOf.format(), "datecal");
+        dateOf = dateOf1.clone().add(1, 'week').subtract(1, 'second').subtract(1, 'minute').utc() ;
+     console.log(dateOf.format(), "datecal");
     }
     else if(view === 'month')
         {
-             dateOf = dateOf1.clone().add(1, 'month').subtract(1, 'second').subtract(1, 'minute').utc();
+             dateOf = dateOf1.clone().add(1, 'month').subtract(1, 'second').subtract(1, 'minute').utc() ;
             console.log(dateOf.format(), "datecal");
         }
         else if(view === 'day')
         {
-             dateOf = dateOf1.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute').utc(); 
+             dateOf = dateOf1.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute').utc() ; 
             console.log(dateOf.format(), "datecal");
         }
        // console.log(dateOf.format(), "datecal");
@@ -473,7 +474,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             setTime({ ...time, start: timings.start, end: timings.end })
            
             const eventList = responseData.events.map((evente) => {
-                console.log(evente, "evein");
+             //   console.log(evente, "evein");
 
                 return {
                     //  id: evente.id,
@@ -528,7 +529,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     //     { id : "res2" , title:"second"},
     // ]  
     // console.log(eventsListing,"evets");
-
+    const timezone23 = localStorage.getItem('timezone');
     const startTimeMoment = moment(bookingDetails.startTime, 'hh:mm A');
     const startTime24HourFormat = startTimeMoment.format('HH:mm:ss');
     const endTimeMoment = moment(bookingDetails.endTime, 'hh:mm A');
@@ -537,6 +538,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const endDate = moment(bookingDetails.endDate).format('YYYY-MM-DD');
     const startDateTime = moment.utc(`${startDate}T${startTime24HourFormat}Z`).format();
     const endDateTime = moment.utc(`${endDate}T${endTime24HourFormat}Z`).format();
+    //  const startDateTime = moments.tz(timezone23).utc(`${startDate}T${startTime24HourFormat}Z`).format();
+    //  const endDateTime = moments.tz(timezone23).utc(`${endDate}T${endTime24HourFormat}Z`).format();
     const handleCheckAvialability = () => {
         //console.log(bookingDetails.sportsId,"hjy");
         setSpinner({ ...spinner, checkAvialabilitySpinner: true });
@@ -668,12 +671,21 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         };
     }
 
-    const handleNavigation =(date) =>{
-       console.log(moment(date).utc(),"viewdate");
-     //  fetchEventData(date);
-    // setDate(date)
-        
-    }
+    const handleNavigation = (newDate, view) => {
+        console.log('Navigating to:', newDate); // Start date of the view
+        let endDate;
+        if (view === 'week') {
+            // Calculate end date for week view (add 6 days)
+             endDate = moment(newDate).add(6, 'days').toDate();
+            console.log('End date of the week:', endDate);
+        } else if (view === 'month') {
+            // Calculate end date for month view (add 1 month and subtract 1 day)
+             endDate = moment(newDate).add(1, 'month').subtract(1, 'day').toDate();
+            console.log('End date of the month:', endDate);
+        }
+        // Fetch event data based on newDate and view
+        fetchEventData();
+    };
    
     const handleViewChange =(view) =>{
         console.log(view,"viewdATE");
@@ -752,6 +764,15 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                     eventPropGetter={eventStyleGetter}
                     onNavigate={handleNavigation}
                     onView={handleViewChange}
+                    // components={{
+                    //     toolbar: props => (
+                    //         <div>
+                    //             <button onClick={() => handleViewChange('day')}>Day</button>
+                    //             <button onClick={() => handleViewChange('week')}>Week</button>
+                    //             <button onClick={() => handleViewChange('month')}>Month</button>
+                    //         </div>
+                    //     )
+                    // }}
                 />                 
                     </div>
                 }
