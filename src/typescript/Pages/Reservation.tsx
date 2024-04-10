@@ -407,7 +407,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         if (!editAddPlayer.check) {
             setAddPlayersData([...addPlayersData, values]);
             pricingRuleIdsRef.current.push(pricingId)
-            setShowAlert(true);
+            // setShowAlert(true);
             console.log("Adding new player:", values);
         }
         else {
@@ -1013,7 +1013,8 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                                                         name={"facility"}
                                                                         onClick={() => handleBookFacility(facilities)}
                                                                         onChange={() => handleChange({ target: { name: 'facility', value: facilities?.title } })}
-                                                                        defaultChecked={values.facility === `${facilities?.title}`}
+                                                                       // defaultChecked={values.facility === `${facilities?.title}`}
+                                                                        checked={bookingDetails.facilityCheck === facilities?.id}
                                                                         isInvalid={!!errors.facility}
                                                                         disabled={buttonText === 'Edit'}
                                                                     />)
@@ -1160,6 +1161,7 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                                             setFieldValue('pricingRule', bookingDetails.pricingRuleCheck);
                                                             setFieldValue('facilityType', bookingDetails.facilities);
                                                             setFieldValue('cost', addPlayers.cost);
+                                                            setFieldValue('facilityId',bookingDetails.facilityCheck);
                                                             console.log("Changing field:", e.target.name, "New value:", e.target.value);
                                                         }}
 
@@ -1179,9 +1181,9 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                                                                         value={!editAddPlayer.check ? values.sameAsPrimary ? bookingDetails.facilities : `${facility?.name}` : addPlayersData[editAddPlayer.index].facilityType}
                                                                                         name="facilityType"
                                                                                         disabled={values.sameAsPrimary === true}
-                                                                                        onClick={() => handleBookFacility(facility)}
+                                                                                    //    onClick={() => handleBookFacility(facility)}
                                                                                         onChange={() => { handleChange({ target: { name: 'facilityType', value: facility?.name } }); setFieldValue('facilityId', facility?.id) }}
-                                                                                        checked={values.facilityType === facility?.name}
+                                                                                        checked={values.facilityId === facility?.id}
                                                                                         isInvalid={!!errors.facilityType && touched.facilityType}
 
                                                                                     />)
