@@ -17,8 +17,6 @@ interface SpinnerState {
   pricingRuleSpinner:boolean;
 }
 const Login: React.FC<{setIsSignedIn: React.Dispatch<React.SetStateAction<boolean>>; spinner: SpinnerState; setSpinner: React.Dispatch<React.SetStateAction<SpinnerState>>; }> = ({setIsSignedIn,spinner,setSpinner}) => {
-
- // const [spinner,setSpinner] =useState(false);
  const tempURL = process.env.REACT_APP_BASEURLTEMP;
 const orgURL = process.env.REACT_APP_BASEURLORG;
 const navigate = useNavigate();
@@ -33,18 +31,14 @@ const navigate = useNavigate();
     .then((response) => {
       console.log(response,"65655")
      localStorage.setItem("AccessToken",response.data.accessToken);
-       setIsSignedIn(true);
-       //setSpinner(true); 
+       setIsSignedIn(true); 
        Swal.fire({
         icon: 'success',
         title: 'Login Successful!',
         text: `Welcome back`,
-      });
-      // setTimeout(() =>
-      // {
+      });   
         navigate("/center");
         setSpinner({...spinner,loginSpinner:false});
-      // },3000)
      })
     .catch((err) => {console.log(err);Swal.fire({
       icon: 'error',

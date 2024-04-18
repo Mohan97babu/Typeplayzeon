@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card,Placeholder } from "react-bootstrap";
+import { Card } from "react-bootstrap";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Skeleton,{ SkeletonTheme } from 'react-loading-skeleton';
@@ -14,10 +14,6 @@ interface Center {
   stateProvince: string;
   centerHours: { weekday: string }[];
 }
-
-// interface AddCenterProps {
-//   setOrgDetails: (details: any) => void;
-// }
 interface SpinnerState {
   loginSpinner: boolean;
   centerSpinner: boolean;
@@ -29,7 +25,6 @@ interface SpinnerState {
 }
 const AddCenter: React.FC<{setOrgDetails:React.Dispatch<React.SetStateAction< (details: any) => void>>;spinner:SpinnerState ; setSpinner:React.Dispatch<React.SetStateAction<SpinnerState>>;}> = ({ setOrgDetails,spinner,setSpinner}) => {
   const [centerData, setCenterData] = useState<Center[]>([]);
-//  const [spinner,setSpinner] = useState(true);
   const navigate = useNavigate();
   const orgId = localStorage.getItem("orgId");
   const tempURL = process.env.REACT_APP_BASEURLTEMP;
@@ -70,8 +65,6 @@ useEffect(() => {
       localStorage.setItem("first",response.data.firstName);
       localStorage.setItem("last",response.data.lastName);
       localStorage.setItem("orgName",response.data.orgName);
-
-
     })
     .catch(err => console.log(err));
 
@@ -80,7 +73,6 @@ useEffect(() => {
       .then(response => {
         setCenterData(response.data);
         console.log(response.data); 
-       // setSpinner(false);
        setSpinner({...spinner,centerSpinner:false});
       })
       .catch(err => console.log(err));
@@ -100,17 +92,6 @@ return (
       <div className="mt-2 fw-bold">Center</div>
       <hr className="mt-1 ms-2" />
       {spinner.centerSpinner ? 
-      // <Card style={{ width: '18rem' }}>
-      //   <Card.Body>
-      //     <Placeholder as={Card.Title} animation="glow">
-      //       <Placeholder xs={12} />
-      //     </Placeholder>
-      //     <Placeholder as={Card.Text} animation="glow">
-      //       <Placeholder xs={12} /> <Placeholder xs={4} /> <Placeholder xs={4} />{' '}
-      //       <Placeholder xs={6} /> <Placeholder xs={8} />
-      //     </Placeholder>
-      //   </Card.Body>
-      // </Card> 
       <div className='d-flex gap-2 '>
       <Card className='bg-white p-2'style={{ width: '18rem' }}>
         <SkeletonTheme baseColor="gainsboro" highlightColor="white"><p> <Skeleton count={1}  height={262}/> </p> </SkeletonTheme> 

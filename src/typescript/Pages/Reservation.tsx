@@ -1,7 +1,7 @@
 import { Col, Row, Form, Button, Offcanvas, Table, Spinner, Badge, Alert } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import React, { useState, ChangeEvent, useEffect, useRef, ReactNode } from "react";
-import Select from 'react-select';
+import Select,{components, DropdownIndicatorProps} from 'react-select';
 import { BookingType } from "../../utils/Data";
 import { Time, Days, TableAddPlayers, TablePricing } from "../../utils/Data";
 import Moment from "react-moment";
@@ -76,14 +76,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     const [appearForm, setAppearForm] = useState(false);
     const [startTime, setStartTime] = useState(null);
     const [endTime, setEndTime] = useState(null);
-    const [perCost, setPerCost] = useState("");
-    const [disable, setDisable] = useState(false);
-    const [sportsId, setSportsId] = useState(0);
     const [showAlert, setShowAlert] = useState(false);
-    //  const [spinner, setSpinner] = useState(true);
     const [showEvent, setShowEvent] = useState(false)
     const [selectedEvent, setSelectedEvent] = useState<any>({});
-    const [nameDisClose, setNameDisclose] = useState(false)
     const [pricingId, setPricingId] = useState("");
     const [buttonText, setButtonText] = useState('Save')
     const [totalPrice, setTotalPrice] = useState("")
@@ -102,12 +97,12 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         addPricingCheck: "",
         cost: "",
     })
-    console.log(orgDetails, "vsf")
     const [editAddPlayer, setEditAddPlayer] = useState({
         check: false,
         index: "",
         pricingId: "",
     })
+    const [view,setView] = useState('day');
     const [addPlayersData, setAddPlayersData] = useState<any>([]);
     const [calendarDetails, setCalendarDetails] = useState<calendarDetails>({
         facilityType: "",
@@ -124,7 +119,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         pricingrule: [],
         calendarDetails: [],
         checkFacility: [],
-
+        
     })
     const data = addPlayersData.map((player) => ({
         firstName: player.firstName,
@@ -135,7 +130,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             pricingRule: { id: player?.pricingRuleId.toString() }
         })
     }));
-    //   console.log(data, "playdata");
     useEffect(() => {
         if (addPlayersData) {
             const data = addPlayersData.map(player => ({
@@ -147,13 +141,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     pricingRule: { id: "789" }
                 })
             }));
-
             reservationPlayers = data
-
         }
     }, [addPlayersData]);
     let modifyDate;
-    const [view,setView] = useState('day');
     useEffect(()=>{
       fetchEventData();
     },[modifyDate,view])
@@ -178,7 +169,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         facilityId: yup.string(),
     })
     const handleAddPlayerOpen = () => { setAddShow(true) }
-    const handleAddPlayerClose = () => { setAddShow(false); clearState(); setNameDisclose(false); setEditAddPlayer({ pricingId: "", check: false, index: "" }); setShowAlert(false); }
+    const handleAddPlayerClose = () => { setAddShow(false); clearState();  setEditAddPlayer({ pricingId: "", check: false, index: "" }); setShowAlert(false); }
     const handleClose = () => { setShow(false); localStorage.removeItem("error"); resetBookDetails(); }
     const handleShow = () => { setShow(true); };
     const handleOpenBookPreview = () => setBookShow(true)
@@ -198,7 +189,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         else {
             setButtonText('Save');
         }
-
         pricingRuleIdsRef.current.push(pricingId)
         handleCostPricing();
     }
@@ -212,7 +202,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     }
 
     const handleChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-        // console.log(e.target.name, e.target.value, e, e.target.value, e.target?.options.selectedIndex + 1, "value");
         setBookingDetails({ ...bookingDetails, [e.target.name]: e.target.value });
         if (e.target.name === "bookingOccurence") {
             setBookingDetails({ ...bookingDetails, startDate: null, endDate: null, startTime: "", endTime: "", bookingOccurence: e.target.value });
@@ -226,7 +215,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         if (e.target.name === "facilityType") {
             setBookingDetails({ ...bookingDetails, sportsId: e.target?.options.selectedIndex + 1, facilityType: e.target.value });
         }
-        //  console.log("edited")
     }
     const clearState = () => {
         setAddPlayers({ firstName: "", lastName: "", nameDiscloseCheck: false, sameAsPrimary: false, addFacilityCheck: "", addPricingCheck: "", cost: "" });
@@ -248,7 +236,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         setPricingId(newPricingId);
     }
     const listFacilities = async (sportsId: any) => {
-        setSportsId(sportsId)
         await axios.get(`${tempURL}/api/v1/facilities?sportId.equals=${sportsId}&centerId.equals=${centerId}`)
             .then((response) => { setApiResponse((prev) => ({ ...prev, facilities: response.data })); setSpinner({ ...spinner, facilitySpinner: false, sportSpinner: false }); })
             .catch((err) => console.log(err))
@@ -265,9 +252,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         listFacilities(sportsId);
     }
     const handleIds = (e) => {
-        console.log(e.target.value, e, e.target.selectedOptions[0].outerText, "eid");
         setCalendarDetails({ ...calendarDetails, facilityId: e.target.value, facilities: e.target.selectedOptions[0].outerText });
-
     }
     const handleDateCalendar = (selectedDate: any) => {
         setCalendarDetails({ ...calendarDetails, date: selectedDate })
@@ -284,18 +269,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 .catch((err) => console.log(err));
         }
         listSports();
-       // fetchEventData();
     }, []);
-    // const handleBookFacility = async (type: any) => {
-    //     setBookingDetails({ ...bookingDetails, facilities: type.name, facilityCheck: type.id });
-    //     setSpinner({...spinner,pricingRuleSpinner:true})
-    //     await axios.get(`${tempURL}/api/v1/pricing-rules?centerId=${centerId}&facilityIds=${type?.id}`)
-    //         .then((response) => { setApiResponse({ ...apiResponse, pricingrule: response.data });setSpinner({...spinner,pricingRuleSpinner:false}) })
-    //         .catch(err => console.log(err))
-    // }
     const handleBookFacility = async (type: any) => {
-        console.log(type, "typedff");
-
         setBookingDetails({ ...bookingDetails, facilities: type.title, facilityCheck: type.id });
         setSpinner({ ...spinner, pricingRuleSpinner: true })
         await axios.get(`${tempURL}/api/v1/pricing-rules?centerId=${centerId}&facilityIds=${type?.id}`)
@@ -332,7 +307,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         { value: '6', label: 'Fri', fulldayname: "Friday" },
         { value: '7', label: 'Sat', fulldayname: "Saturday" },
     ];
-
     const handleCheckboxChange = (value, fulldayname) => {
         const isSelected = bookingDetails.selectedDays.find(day => day.value === value);
 
@@ -388,8 +362,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         ));
     };
     let sportID = bookingDetails.sportsId;
-
-
     const handleSearchCalendar = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         fetchEventData();
@@ -407,7 +379,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         if (!editAddPlayer.check) {
             setAddPlayersData([...addPlayersData, values]);
             pricingRuleIdsRef.current.push(pricingId)
-            // setShowAlert(true);
             console.log("Adding new player:", values);
         }
         else {
@@ -425,7 +396,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         }
         handleCostPricing();
     }
-    // console.log(addPlayersData, "addpalyers")
 
     let facilityItemIds = [];
     let title = [];
@@ -434,18 +404,9 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     let moments = require('moment-timezone');
     const [eventsListing, setEventsListing] = useState([])
      modifyDate = calendarDetails.date;
-  //  const dateOf1 = moment(modifyDate).utc();
- //   console.log(dateOf1.format(), "datty");
- //   let dateOf = dateOf1.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute').utc();
-  // const dateOf = dateOf1.startOf('day').fromNow();
-   // console.log(dateOf.format(), "datecal");
-
-    // currentMoment.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute')
     const fetchEventData = async () => {
     const dateOf1 = moment(modifyDate).utc();
     let dateOf;
-   // setSpinner({...spinner,calendarSpinner:true})
-   // console.log(moment(newDate).format(),endDate,"vbnnj");
     
    if(view === 'week')
     {
@@ -462,7 +423,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
              dateOf = dateOf1.clone().add(1, 'day').subtract(1, 'second').subtract(1, 'minute').utc() ; 
             console.log(dateOf.format(), "datecal");
         }
-       // console.log(dateOf.format(), "datecal");
         try {
             const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${dateOf1.format()}&end.lessThanOrEqual=${dateOf.format()}&Id.in=${calendarDetails.facilities === "All Court" ? facilityItemIds : calendarDetails.facilityId}`);
             const responseData = response.data;
@@ -474,10 +434,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             setTime({ ...time, start: timings.start, end: timings.end })
            
             const eventList = responseData.events.map((evente) => {
-             //   console.log(evente, "evein");
 
                 return {
-                    //  id: evente.id,
                     title: evente.reservation.title,
                     start: moments(evente?.start).tz(response?.data?.timezone?.name).utc()._d,
                     end: moments(evente?.end).tz(response?.data?.timezone?.name).utc()._d,
@@ -493,14 +451,10 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     bookingStatus: evente.reservation.booking.bookingStatus,
                     facility: evente.reservation.facility.title,
                     createdAt: evente.reservation.booking.createdAt,
-                    // start:new Date(evente.start),
-                    // end:new Date(evente.end),
-                    // color: evente.bgColor,
                     bookingSource:evente.reservation.booking.bookingSource,
                 }
             });
             setEventsListing(eventList);
-            //console.log(eventlist,"fullevent");
             if (Array.isArray(resources)) {
                 const eventsWithDynamicTitles: any = resources.map((resource) => {
                     title.push(resource?.title)
@@ -519,16 +473,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         }
     };
     console.log(eventsListing, "listtt");
-
-    // const events = [
-    //     { id: 1, title: 'Event 1', start: new Date(), end: new Date() },
-    //     { id: 2, title: 'Event 2', start: new Date(), end: new Date() }
-    // ];
-    // const resources = [
-    //     { id :"res1" , title :"first"},
-    //     { id : "res2" , title:"second"},
-    // ]  
-    // console.log(eventsListing,"evets");
     const timezone23 = localStorage.getItem('timezone');
     const startTimeMoment = moment(bookingDetails.startTime, 'hh:mm A');
     const startTime24HourFormat = startTimeMoment.format('HH:mm:ss');
@@ -541,7 +485,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     //  const startDateTime = moments.tz(timezone23).utc(`${startDate}T${startTime24HourFormat}Z`).format();
     //  const endDateTime = moments.tz(timezone23).utc(`${endDate}T${endTime24HourFormat}Z`).format();
     const handleCheckAvialability = () => {
-        //console.log(bookingDetails.sportsId,"hjy");
         setSpinner({ ...spinner, checkAvialabilitySpinner: true });
         axios.get(`${tempURL}/api/v1/facility/getAvailability?centerId.equals=${centerId}&sportId.equals=${bookingDetails.sportsId}&startTime=${startDateTime}&endTime=${endDateTime}&isMultiple=${bookingDetails.bookingOccurence === "Single Booking" ? false : true}&days=${bookingDetails.bookingOccurence === "Single Booking" ? "" : bookingDetails.selectedDays}`)
             .then((response: any) => {
@@ -562,26 +505,12 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             .then((response) => { setTotalPrice(response.data); })
             .catch((err) => console.log(err))
     }
-    const resourceClassName = 'custom-resource';
-    const resourceStyle = (resource, _idx, _isSelected) => {
-        //    console.log("inresou")
-        return {
-            backgroundColor: 'red',
-            color: 'white',
-        };
-    };
-    //   console.log(eventData, "timi")
     const startTimeString = time.start;
     const endTimeString = time.end;
-
-
     const startTimeParts = startTimeString.split(":").map(part => parseInt(part));
     const endTimeParts = endTimeString.split(":").map(part => parseInt(part));
-
-
     const CalendarStartTime = new Date();
     CalendarStartTime.setHours(startTimeParts[0], startTimeParts[1], startTimeParts[2], 0);
-
     const CalendarEndTime = new Date();
     CalendarEndTime.setHours(endTimeParts[0], endTimeParts[1], endTimeParts[2], 0);
     const bookId = localStorage.getItem("bookid");
@@ -642,14 +571,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 });
             })
     }
-    const handleFacility = (id) => {
-        console.log(id, "idoff");
-
-        setBookingDetails({ ...bookingDetails, sportsId: id });
-    }
-    console.log(addPlayersData, "addpalye");
     const handleSelectEvent = (event) => {
-        console.log(event, "jiooo");
         setSelectedEvent(event);
         setShowEvent(true);
     }
@@ -665,38 +587,38 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             border: 'none',
             display: 'block'
         };
-
         return {
             style: style
         };
     }
-
     const handleNavigation = (newDate, view) => {
-        console.log('Navigating to:', newDate); // Start date of the view
+        console.log('Navigating to:', newDate); 
         let endDate;
         if (view === 'week') {
-            // Calculate end date for week view (add 6 days)
              endDate = moment(newDate).add(6, 'days').toDate();
             console.log('End date of the week:', endDate);
         } else if (view === 'month') {
-            // Calculate end date for month view (add 1 month and subtract 1 day)
              endDate = moment(newDate).add(1, 'month').subtract(1, 'day').toDate();
             console.log('End date of the month:', endDate);
         }
-        // Fetch event data based on newDate and view
         fetchEventData();
     };
    
     const handleViewChange =(view) =>{
         console.log(view,"viewdATE");
        setView(view);
-    //  fetchEventData(view);
     }
-    console.log(view,"viewoutside");
-    console.log(bookingDetails, "bookrev")
-    console.log(spinner, "apifac");
-
-console.log(calendarDetails.date,"dYYYYYYYYYY");
+    const CaretDownIcon = () => {
+        return <Icon icon="il:clock" style={{color: "#474141"}} height={23}/>;
+      };
+    const DropdownIndicator: React.FC<DropdownIndicatorProps> =(props) =>
+        {
+            return (
+                <components.DropdownIndicator {...props}>
+                    <CaretDownIcon />
+                </components.DropdownIndicator>
+            )
+        }
     return (
         <div className="bg-white mt-2 rounded-2 ">
             <Row className="p-3 mx-0">
@@ -764,15 +686,6 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                     eventPropGetter={eventStyleGetter}
                     onNavigate={handleNavigation}
                     onView={handleViewChange}
-                    // components={{
-                    //     toolbar: props => (
-                    //         <div>
-                    //             <button onClick={() => handleViewChange('day')}>Day</button>
-                    //             <button onClick={() => handleViewChange('week')}>Week</button>
-                    //             <button onClick={() => handleViewChange('month')}>Month</button>
-                    //         </div>
-                    //     )
-                    // }}
                 />                 
                     </div>
                 }
@@ -838,7 +751,6 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                 <Col>
                                 </Col>
                             </Row>
-
                         </Offcanvas.Body>
 
                     </Offcanvas>}
@@ -862,13 +774,6 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                 </Col>
                                 <Col sm={12} xl={6}>
                                     <Form.Label className="fw-medium">Facility Type<span className="text-danger ms-1">*</span></Form.Label>
-                                    {/* <Form.Select aria-label="Default select example" name="facilityType" value={bookingDetails.facilityType} onChange={handleChange}>
-                                        {apiResponse.facilityType.map((facility) => {
-                                            return (
-                                                <option value={facility.title} onClick={() =>handleFacility(facility.sport.id)} >{facility.title}</option>
-                                            );
-                                        })}
-                                    </Form.Select> */}
                                     <Form.Select aria-label="Default select example" name="facilityType" value={bookingDetails.facilityType} onChange={handleChange}>
                                         {apiResponse.facilityType.map((facility) => {
                                             return (
@@ -911,11 +816,11 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                 </Col>
                                 <Col sm={12} md={6} lg={3} xl={3}>
                                     <Form.Label className="mb-2 fw-medium">Start Time<span className="text-danger ms-1">*</span></Form.Label>
-                                    <Select value={Time.find(option => option.value === startTime) || startTime} onChange={(selectedOption, actionMeta) => handleReactSelectChange(selectedOption, actionMeta)} options={Time} placeholder="hh:mm" name="startTime" isDisabled={bookingDetails.startDate === null && bookingDetails.endDate === null} />
+                                    <Select value={Time.find(option => option.value === startTime) || startTime} components={{DropdownIndicator}} onChange={(selectedOption, actionMeta) => handleReactSelectChange(selectedOption, actionMeta)} options={Time} placeholder="hh:mm" name="startTime" isDisabled={bookingDetails.startDate === null && bookingDetails.endDate === null} />
                                 </Col>
                                 <Col sm={12} md={6} lg={3} xl={3}>
                                     <Form.Label className="mb-2 fw-medium">End Time<span className="text-danger ms-1">*</span></Form.Label>
-                                    <Select value={Time.find(option => option.value === endTime) || endTime} onChange={(selectedOption, actionMeta) => handleReactSelectChange(selectedOption, actionMeta)} options={Time} placeholder="hh:mm" name="endTime" isDisabled={bookingDetails.startDate === null && bookingDetails.endDate === null} />
+                                    <Select value={Time.find(option => option.value === endTime) || endTime} components={{DropdownIndicator}} onChange={(selectedOption, actionMeta) => handleReactSelectChange(selectedOption, actionMeta)} options={Time} placeholder="hh:mm" name="endTime" isDisabled={bookingDetails.startDate === null && bookingDetails.endDate === null} />
                                 </Col>
                             </Row>
                             {bookingDetails.bookingOccurence === "Multiple Booking" && <div>
@@ -981,29 +886,6 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                                     <Col sm={12} lg={6} xl={6} className="">
                                                         <Form.Label className="px-0 fw-medium">Facility <span className="text-danger">*</span></Form.Label>
                                                         <div className="h-35 border p-2" >
-                                                            {/* {Object.values(apiResponse.facilities).map((type: any, index: any) => {
-                                                            return (
-                                                                <div key={index}>
-                                                                    {type.map((facilities: any) => {
-                                                                        return (
-                                                                            <Form.Check
-                                                                                type={"radio"}
-                                                                                label={`${facilities?.name}`}
-                                                                                value={`${facilities?.name}`}
-                                                                                name={"facility"}
-                                                                                onClick={() => handleBookFacility(facilities)}
-                                                                                onChange={() => handleChange({ target: { name: 'facility', value: facilities?.name } })}
-                                                                                defaultChecked={values.facility === `${facilities?.name}`}
-                                                                                isInvalid={!!errors.facility}
-                                                                                disabled={buttonText === 'Edit'}
-                                                                            />)
-                                                                    })}
-                                                                </div>
-                                                            )
-                                                        })} */}
-                                                            {/* {Object.values(apiResponse.facilities).map((type: any, index: any) => {
-                                                            return (
-                                                                <div key={index}> */}
                                                             {apiResponse?.checkFacility?.map((facilities: any) => {
                                                                 return (
                                                                     <Form.Check
@@ -1013,7 +895,6 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                                                         name={"facility"}
                                                                         onClick={() => handleBookFacility(facilities)}
                                                                         onChange={() => handleChange({ target: { name: 'facility', value: facilities?.title } })}
-                                                                       // defaultChecked={values.facility === `${facilities?.title}`}
                                                                         checked={bookingDetails.facilityCheck === facilities?.id}
                                                                         isInvalid={!!errors.facility}
                                                                         disabled={buttonText === 'Edit'}
@@ -1030,8 +911,6 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                                         <div className="h-35 border p-2">
                                                             <div className="fw-medium">{bookingDetails.facilities}</div>
                                                             {spinner.checkAvialabilitySpinner ? <Spinner animation="border" variant="danger" /> : Object.values(apiResponse.pricingrule).map((pricing, index) => {
-                                                                //    console.log(pricing?.pricingRuleId,"pricein");
-
                                                                 return (
                                                                     <div key={index}>
                                                                         <Form.Check
@@ -1072,7 +951,6 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                     </thead>
                                     <tbody>
                                         {Array.isArray(addPlayersData) && addPlayersData.map((data: { pricingRule: ReactNode; facilityType: ReactNode; firstName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; lastName: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addFacilityCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; addPricingCheck: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; cost: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: number) => {
-                                            // console.log(addPlayersData, "addpalydata");
                                             return (
                                                 <tr key={index}>
                                                     <td>{index + 1}</td>
@@ -1106,12 +984,7 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                                 pricingRuleId: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.pricingRuleId ? addPlayersData[editAddPlayer.index].pricingRuleId : "",
                                                 facilityId: editAddPlayer.index !== null && addPlayersData[editAddPlayer.index]?.facilityId ? addPlayersData[editAddPlayer.index].facilityId : "",
                                             }}
-                                        //  enableReinitialize={true}
                                         >
-                                            {/* {({ initialValues }) => {
-                                            console.log("Initial Values:", initialValues);
-                                            // Rest of your Formik code
-                                        }} */}
                                             {({ handleSubmit, handleChange, values, errors, setFieldValue, touched }) => (
                                                 <Form onSubmit={handleSubmit}>
                                                     <Form.Check
@@ -1199,8 +1072,6 @@ console.log(calendarDetails.date,"dYYYYYYYYYY");
                                                             <div className="h-35 border p-2">
                                                                 <div className="fw-medium">{values.facilityType}</div>
                                                                 {Object.values(apiResponse.pricingrule).map((pricing, index) => {
-                                                                    //  console.log(pricing?.pricingRuleId,"ki");
-
                                                                     return (
                                                                         <div key={index}>
                                                                             <Form.Check
