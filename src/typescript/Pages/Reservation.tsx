@@ -19,7 +19,9 @@ import EventColors from "../components/SplitComponents/EventColors";
 import Swal from "sweetalert2";
 import moments from "moment-timezone";
 import Skeleton,{ SkeletonTheme} from "react-loading-skeleton";
-import 'react-loading-skeleton/dist/skeleton.css'
+import 'react-loading-skeleton/dist/skeleton.css';
+import { datas } from "../components/Context/context";
+import CalendarInputs from "../components/SplitComponents/CalendarInputs";
 
 
 interface bookingDetails {
@@ -103,6 +105,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
         pricingId: "",
     })
     const [view,setView] = useState('day');
+    const [dates,setDates] = useState();
     const [addPlayersData, setAddPlayersData] = useState<any>([]);
     const [calendarDetails, setCalendarDetails] = useState<calendarDetails>({
         facilityType: "",
@@ -400,10 +403,17 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
     let facilityItemIds = [];
     let title = [];
     console.log(facilityItemIds, "ids");
-    
+    let newDates = moment().format('YYYY-MM-DD[T]hh:mm:ss[Z]'),endDates,newDates1;
+    let endDatesFormatted;
+    console.log(newDates,endDates,"datef");
+    useEffect(()=>
+    {
+       handleNavigation(newDates,view);
+    },[])
     let moments = require('moment-timezone');
     const [eventsListing, setEventsListing] = useState([])
      modifyDate = calendarDetails.date;
+     
     const fetchEventData = async () => {
     const dateOf1 = moment(modifyDate).utc();
     let dateOf;
@@ -424,7 +434,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             console.log(dateOf.format(), "datecal");
         }
         try {
-            const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${dateOf1.format()}&end.lessThanOrEqual=${dateOf.format()}&Id.in=${calendarDetails.facilities === "All Court" ? facilityItemIds : calendarDetails.facilityId}`);
+            const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${view === 'day'? newDates.split("+")[0]:dateOf1.format()}&end.lessThanOrEqual=${view === 'day'? endDatesFormatted:dateOf.format()}&Id.in=${calendarDetails.facilities === "All Court" ? facilityItemIds : calendarDetails.facilityId}`);
             const responseData = response.data;
             const resources = responseData.myresources;
             const timings = responseData.timings;
@@ -434,7 +444,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             setTime({ ...time, start: timings.start, end: timings.end })
            
             const eventList = responseData.events.map((evente) => {
-
                 return {
                     title: evente.reservation.title,
                     start: moments(evente?.start).tz(response?.data?.timezone?.name).utc()._d,
@@ -591,18 +600,49 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             style: style
         };
     }
+
+    // const handleNavigation = (newDate, view) => {
+    //     console.log('Navigating to:', newDate);
+    //     newDates = newDate
+    //    //  endDates;
+    //     if (view === 'week') {
+    //          endDates = moment(newDate).add(6, 'days').toDate();
+    //         console.log('End date of the week:', endDates);
+    //     } else if (view === 'month') {
+    //          endDates = moment(newDate).add(1, 'month').subtract(1, 'day').toDate();
+    //         console.log('End date of the month:', endDates);
+    //     }
+    //     else{
+    //       //  newDates1=newDates.split('+')[0];
+    //         endDates = moment(newDates.split('+')[0]).add(1, 'day').toDate();
+    //        // console.log('End date of the day:', endDates.utc(endDates,"ddd MMM DD YYYY HH:mm:ss [GMT]ZZ").format("YYYY-MM-DDTHH:mm:ss"));
+    //     }
+    //    let  endDates1 = endDates.utc(endDates,"ddd MMM DD YYYY HH:mm:ss [GMT]ZZ").format("YYYY-MM-DDTHH:mm:ss");
+    //    console.log(endDates1,"endyyyyyyyy")
+    //     fetchEventData();
+    // };
+
     const handleNavigation = (newDate, view) => {
-        console.log('Navigating to:', newDate); 
-        let endDate;
+        console.log('Navigating to:', moment(newDate).format('YYYY-MM-DD[T]hh:mm:ss[Z]'));
+        let endDates;
+        let newDates2 = moment(newDate).format('YYYY-MM-DD[T]hh:mm:ss[Z]');
         if (view === 'week') {
-             endDate = moment(newDate).add(6, 'days').toDate();
-            console.log('End date of the week:', endDate);
+            endDates = moment(newDates2).add(6, 'days').toDate();
+            console.log('End date of the week:', endDates);
         } else if (view === 'month') {
-             endDate = moment(newDate).add(1, 'month').subtract(1, 'day').toDate();
-            console.log('End date of the month:', endDate);
+            endDates = moment(newDates2).add(1, 'month').subtract(1, 'day').toDate();
+            console.log('End date of the month:', endDates);
+        } else {
+            endDates = moment(newDates2.split('+')[0]).add(1, 'day').toDate();
         }
+    
+        // Format endDates to desired format
+         endDatesFormatted = moment(endDates).format("YYYY-MM-DDTHH:mm:ss[Z]");
+        console.log('Formatted end date:',endDatesFormatted);
+    
         fetchEventData();
     };
+    
    
     const handleViewChange =(view) =>{
         console.log(view,"viewdATE");
@@ -625,7 +665,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                 <EventColors />
             </Row>      
             <hr className="my-1" />
-            <Row className="p-3 mx-0">
+            <datas.Provider value={{calendarDetails,setCalendarDetails,apiResponse,handleIds,facilityItemIds,handleDateCalendar,handleShow,handleSearchCalendar,listFacilities}}>
+            {/* <Row className="p-3 mx-0">
                 <div className="d-lg-flex justify-content-between">
                     <Col sm={12} md={12} lg={2} xl={3}>
                         <div>Facility Type <span className="text-danger">*</span> {spinner.sportSpinner ? <Spinner animation="border" variant="danger" size="sm" /> : null}</div>
@@ -664,7 +705,8 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                         </Col>
                     </div>
                 </div>
-            </Row>
+            </Row> */}
+            <CalendarInputs handleCalendarChange={handleCalendarChange} handleIds={handleIds} handleDateCalendar={handleDateCalendar} handleShow={handleShow} handleSearchCalendar={handleSearchCalendar}/>
             <Row className="p-2 mx-0 w-100">
                 {spinner.calendarSpinner ? <SkeletonTheme baseColor="gainsboro" highlightColor="white"><p> <Skeleton count={1} height={500} /> </p> </SkeletonTheme> 
                 : <div className="calendar-container">                   
@@ -1284,6 +1326,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                     <div className="bg-gainsboro text-end p-2"><Button className="bg-dark" onClick={handleCloseBookPreview}>Back</Button></div>
                 </Offcanvas>
             </Offcanvas>
+            </datas.Provider>
         </div>
     );
 }
