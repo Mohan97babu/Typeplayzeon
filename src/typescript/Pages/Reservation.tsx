@@ -1060,7 +1060,6 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
                                                         <Col>
                                                             <Form.Label className="fw-medium">LastName</Form.Label>
                                                             <Form.Control type="text" placeholder="Enter lastName"
-                                                                //  value={!editAddPlayer.check ? values.nameDisClose ? "Name not disclosed" : values.lastName : addPlayersData[editAddPlayer.index].lastName}
                                                                 value={values.lastName}
                                                                 name="lastName"
                                                                 onChange={(e) => { console.log("Changing field:", e.target.name, "New value:", e.target.value); setFieldValue("lastName", e.target.value) }}
