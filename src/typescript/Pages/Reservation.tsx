@@ -434,7 +434,7 @@ const Reservation: React.FC<{ bookingDetails: bookingDetails, setBookingDetails:
             console.log(dateOf.format(), "datecal");
         }
         try {
-            const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${view === 'day'? newDates.split("+")[0]:dateOf1.format()}&end.lessThanOrEqual=${view === 'day'? endDatesFormatted:dateOf.format()}&Id.in=${calendarDetails.facilities === "All Court" ? facilityItemIds : calendarDetails.facilityId}`);
+            const response = await axios.get(`${tempURL}/api/v1/reservations?centerId.equals=${centerId}&start.greaterThanOrEqual=${dateOf1.format()}&end.lessThanOrEqual=${dateOf.format()}&Id.in=${calendarDetails.facilities === "All Court" ? facilityItemIds : calendarDetails.facilityId}`);
             const responseData = response.data;
             const resources = responseData.myresources;
             const timings = responseData.timings;
